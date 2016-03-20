@@ -390,13 +390,22 @@ boolean getTemperature(float *temp){
 
   // Calcul de la température en degré Celsius
   *temp = ((data[1] << 8) | data[0]) * 0.0625; 
-
+  
+  // Pas d'erreur
+  return true;
 #else
   delay(dht.getMinimumSamplingPeriod());
   *temp = dht.getTemperature();
+
+  if (isnan(*temp)) {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
 #endif
-  // Pas d'erreur
-  return true;
+
 }
 
  
