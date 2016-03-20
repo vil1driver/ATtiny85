@@ -542,10 +542,17 @@ void loop()
         setTemperature(OregonMessageBuffer, temp);
        
         #ifndef THN132N
-          // Set Humidity
-          float humidity = dht.getHumidity();
-          TinySerial.print("Humidity : ");TinySerial.print(humidity);TinySerial.write('%'); TinySerial.println();
-          setHumidity(OregonMessageBuffer, humidity);
+            // Set Humidity
+            float humidity = dht.getHumidity();
+            if (isnan(humidity)) {
+                TinySerial.println("Failed reading humidity from DHT");
+                setHumidity(OregonMessageBuffer, 52);
+            }
+            else
+            {
+                TinySerial.print("Humidity : ");TinySerial.print(humidity);TinySerial.write('%'); TinySerial.println();
+                setHumidity(OregonMessageBuffer, humidity);
+            }    
         #endif  
        
         // Calculate the checksum
