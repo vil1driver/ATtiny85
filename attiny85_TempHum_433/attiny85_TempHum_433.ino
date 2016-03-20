@@ -395,6 +395,7 @@ boolean getTemperature(float *temp){
 	*temp = ((data[1] << 8) | data[0]) * 0.0625; 
 
 #else
+	delay(dht.getMinimumSamplingPeriod());
 	*temp = dht.getTemperature();
 #endif
 	// Pas d'erreur
