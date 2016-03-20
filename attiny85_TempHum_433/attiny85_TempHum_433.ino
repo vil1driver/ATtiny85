@@ -506,7 +506,7 @@ void loop()
 			// Get the battery voltage
 			int bat;
 			uint16_t voltage = readVcc();
-			TinySerial.print("Battery : ");TinySerial.print(voltage);TinySerial.write('V'); TinySerial.println();
+			TinySerial.print("Battery : ");TinySerial.print(voltage);TinySerial.write('mV'); TinySerial.println();
 			
 			if (voltage < MinVcc) {
 				bat = 0; 	// Low
