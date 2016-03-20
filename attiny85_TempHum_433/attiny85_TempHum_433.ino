@@ -28,14 +28,14 @@
 
 /************************************************************
 
-	emplacement des PIN de la puce ATtiny85
+		emplacement des PIN de la puce ATtiny85
 
                          +-/\-+
 Ain0       (D  5)  PB5  1|    |8   VCC
 Ain3       (D  3)  PB3  2|    |7   PB2  (D  2)  INT0  Ain1
 Ain2       (D  4)  PB4  3|    |6   PB1  (D  1)        pwm1
-		   GND  4|    |5   PB0  (D  0)        pwm0
-			 +----+	
+				   GND  4|    |5   PB0  (D  0)        pwm0
+						 +----+	
 
 						 
 ****************       Confuguration       *****************/
@@ -47,10 +47,10 @@ int counter = 15; 		// Nombre de cycles entre chaque transmission (1 cycles = 8 
 // commentez la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
 #define THN132N		// Sonde de température simple (ds18b20)
 
-#define SERIAL_RX PB3 //2 //INPUT
-#define SERIAL_TX PB4 //3 //OUTPUT
+#define SERIAL_RX PB3 // pin 2 // INPUT
+#define SERIAL_TX PB4 // pin 3 // OUTPUT
 
-#define BROCHE 1 // Broche utilisée par la sonde
+#define SONDE PB1 // pin 6 // data sonde
 
 
 /****************   Fin de configuration    *****************/
@@ -64,7 +64,7 @@ int counter = 15; 		// Nombre de cycles entre chaque transmission (1 cycles = 8 
 #ifdef THN132N
 	#include <OneWire.h>
 	#define DS18B20 0x28     // Adresse 1-Wire du DS18B20
-	OneWire ds(BROCHE); // Création de l'objet OneWire ds
+	OneWire ds(SONDE); // Création de l'objet OneWire ds
 #else
 	#include <DHT.h>
 	DHT dht;
@@ -428,7 +428,7 @@ void setup()
 #else
   // Create the Oregon message for a temperature/humidity sensor (THGR2228N)
   byte ID[] = {0x1A,0x2D};
-  dht.setup(BROCHE);
+  dht.setup(SONDE);
 #endif  
  
   setType(OregonMessageBuffer, ID);
