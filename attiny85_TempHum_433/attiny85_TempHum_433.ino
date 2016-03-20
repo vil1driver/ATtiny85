@@ -27,25 +27,22 @@
 */
 
 /************************************************************
-
-		emplacement des PIN de la puce ATtiny85
-
+    emplacement des PIN de la puce ATtiny85
                          +-/\-+
 Ain0       (D  5)  PB5  1|    |8   VCC
 Ain3       (D  3)  PB3  2|    |7   PB2  (D  2)  INT0  Ain1
 Ain2       (D  4)  PB4  3|    |6   PB1  (D  1)        pwm1
-				   GND  4|    |5   PB0  (D  0)        pwm0
-						 +----+	
-
-						 
+                   GND  4|    |5   PB0  (D  0)        pwm0
+                         +----+ 
+             
 ****************       Confuguration       *****************/
 
 
-#define UnitCode 0xCC	// Identifiant unique de votre sonde (hexadecimal)
-#define MinVcc 3000		// Voltage minumum (mV) avant d'indiquer batterie faible
-int counter = 15; 		// Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 120s soit 2 minutes)
+#define UnitCode 0xCC // Identifiant unique de votre sonde (hexadecimal)
+#define MinVcc 3000   // Voltage minumum (mV) avant d'indiquer batterie faible
+int counter = 15;     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 120s soit 2 minutes)
 // commentez la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
-#define THN132N		// Sonde de température simple (ds18b20)
+#define THN132N   // Sonde de température simple (ds18b20)
 
 #define SERIAL_RX PB3 // pin 2 // INPUT
 #define SERIAL_TX PB4 // pin 3 // OUTPUT
@@ -62,21 +59,21 @@ int counter = 15; 		// Nombre de cycles entre chaque transmission (1 cycles = 8 
 #include <SoftwareSerial.h>
 
 #ifdef THN132N
-	#include <OneWire.h>
-	#define DS18B20 0x28     // Adresse 1-Wire du DS18B20
-	OneWire ds(SONDE); // Création de l'objet OneWire ds
+  #include <OneWire.h>
+  #define DS18B20 0x28     // Adresse 1-Wire du DS18B20
+  OneWire ds(SONDE); // Création de l'objet OneWire ds
 #else
-	#include <DHT.h>
-	DHT dht;
+  #include <DHT.h>
+  DHT dht;
 #endif
 
 #include <EEPROM.h>
 
 #ifndef cbi
-	#define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
+  #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
 #ifndef sbi
-	#define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+  #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
 volatile boolean f_wdt = 1;
@@ -84,7 +81,7 @@ volatile boolean f_wdt = 1;
 
 SoftwareSerial TinySerial(SERIAL_RX, SERIAL_TX); // RX, TX
 
-int cnt = 0;	// Initialisation du compte de cycle
+int cnt = 0;  // Initialisation du compte de cycle
  
 const byte TX_PIN = 0;
  
@@ -361,45 +358,45 @@ void calculateAndSetChecksum(byte* data)
 // Retourne true si tout va bien, ou false en cas d'erreur
 boolean getTemperature(float *temp){
 
-#ifdef THN132N 	
-	byte data[9], addr[8];
-	// data : Données lues depuis le scratchpad
-	// addr : adresse du module 1-Wire détecté
+#ifdef THN132N  
+  byte data[9], addr[8];
+  // data : Données lues depuis le scratchpad
+  // addr : adresse du module 1-Wire détecté
 
 
-	if (!ds.search(addr)) { // Recherche un module 1-Wire
-	ds.reset_search();    // Réinitialise la recherche de module
-	return false;         // Retourne une erreur
-	}
+  if (!ds.search(addr)) { // Recherche un module 1-Wire
+  ds.reset_search();    // Réinitialise la recherche de module
+  return false;         // Retourne une erreur
+  }
 
-	if (OneWire::crc8(addr, 7) != addr[7]) // Vérifie que l'adresse a été correctement reçue
-	return false;                        // Si le message est corrompu on retourne une erreur
+  if (OneWire::crc8(addr, 7) != addr[7]) // Vérifie que l'adresse a été correctement reçue
+  return false;                        // Si le message est corrompu on retourne une erreur
 
-	if (addr[0] != DS18B20) // Vérifie qu'il s'agit bien d'un DS18B20
-	return false;         // Si ce n'est pas le cas on retourne une erreur
+  if (addr[0] != DS18B20) // Vérifie qu'il s'agit bien d'un DS18B20
+  return false;         // Si ce n'est pas le cas on retourne une erreur
 
-	ds.reset();             // On reset le bus 1-Wire
-	ds.select(addr);        // On sélectionne le DS18B20
+  ds.reset();             // On reset le bus 1-Wire
+  ds.select(addr);        // On sélectionne le DS18B20
 
-	ds.write(0x44, 1);      // On lance une prise de mesure de température
-	delay(1000);             // Et on attend la fin de la mesure
+  ds.write(0x44, 1);      // On lance une prise de mesure de température
+  delay(1000);             // Et on attend la fin de la mesure
 
-	ds.reset();             // On reset le bus 1-Wire
-	ds.select(addr);        // On sélectionne le DS18B20
-	ds.write(0xBE);         // On envoie une demande de lecture du scratchpad
+  ds.reset();             // On reset le bus 1-Wire
+  ds.select(addr);        // On sélectionne le DS18B20
+  ds.write(0xBE);         // On envoie une demande de lecture du scratchpad
 
-	for (byte i = 0; i < 9; i++) // On lit le scratchpad
-	data[i] = ds.read();       // Et on stock les octets reçus
+  for (byte i = 0; i < 9; i++) // On lit le scratchpad
+  data[i] = ds.read();       // Et on stock les octets reçus
 
-	// Calcul de la température en degré Celsius
-	*temp = ((data[1] << 8) | data[0]) * 0.0625; 
+  // Calcul de la température en degré Celsius
+  *temp = ((data[1] << 8) | data[0]) * 0.0625; 
 
 #else
-	delay(dht.getMinimumSamplingPeriod());
-	*temp = dht.getTemperature();
+  delay(dht.getMinimumSamplingPeriod());
+  *temp = dht.getTemperature();
 #endif
-	// Pas d'erreur
-	return true;
+  // Pas d'erreur
+  return true;
 }
 
  
@@ -498,73 +495,78 @@ uint16_t readVcc()
 void loop()
 {
   
-	if (f_wdt==1)	// wait for timed out watchdog / flag is set when a watchdog timeout occurs
-	{  
-		f_wdt=0;	// reset flag
+  if (f_wdt==1) // wait for timed out watchdog / flag is set when a watchdog timeout occurs
+  {  
+    f_wdt=0;  // reset flag
    
-		if(cnt == counter)	// Nombre de cycle de réveil atteint
-		{
-			// Get the battery voltage
-			int bat;
-			uint16_t voltage = readVcc();
-			TinySerial.print("Battery : ");TinySerial.print(voltage);TinySerial.write('mV'); TinySerial.println();
-			
-			if (voltage < MinVcc) {
-				bat = 0; 	// Low
-			}
-			else {
-				bat = 1;	// High
-			}
-			
-			// Get Temperature, humidity and battery level from sensors
-			float temp;
-			
-			// Lecture de la dernière valeur de température
-			//float last = EEPROM.read(0);
-			
-			
-			if (getTemperature(&temp)) {
-			
-				TinySerial.print("Temperature : ");TinySerial.print(temp);TinySerial.write(176); // caractère °
-				TinySerial.write('C'); TinySerial.println();
-				
-				// Mémorisation de la tepérature relevée
-				//EEPROM.write(0,temp);
-				
-				setBatteryLevel(OregonMessageBuffer, bat);
-				setTemperature(OregonMessageBuffer, temp);
-			 
-				#ifndef THN132N
-					// Set Humidity
-					float humidity = dht.getHumidity();
-					TinySerial.print("Humidity : ");TinySerial.print(humidity);TinySerial.write('%'); TinySerial.println();
-					setHumidity(OregonMessageBuffer, humidity);
-				#endif  
-			 
-				// Calculate the checksum
-				calculateAndSetChecksum(OregonMessageBuffer);
-			 			 
-				// Send the Message over RF
-				sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-				// Send a "pause"
-				SEND_LOW();
-				delayMicroseconds(TWOTIME*8);
-				// Send a copie of the first message. The v2.1 protocol send the message two time 
-				sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-				SEND_LOW();
-			}
-			else {
-				TinySerial.println("getTemperature failed");
-			}
-			  
-			cnt = 0;
-		}
-		else {
-			cnt++;
-		}
-		
-		system_sleep();
-	  
-	}
+    if(cnt == counter)  // Nombre de cycle de réveil atteint
+    {
+      // Get the battery voltage
+      int bat;
+      uint16_t voltage = readVcc();
+      TinySerial.print("Battery : ");TinySerial.print(voltage);TinySerial.write('mV'); TinySerial.println();
+      
+      if (voltage < MinVcc) {
+        bat = 0;  // Low
+      }
+      else {
+        bat = 1;  // High
+      }
+      
+      // Get Temperature, humidity and battery level from sensors
+      float temp;
+      
+      // Lecture de la dernière valeur de température
+      //float last = EEPROM.read(0);
+      
+      
+      if (getTemperature(&temp)) {
+      
+        TinySerial.print("Temperature : ");TinySerial.print(temp);TinySerial.write(176); // caractère °
+        TinySerial.write('C'); TinySerial.println();
+        
+        // Mémorisation de la tepérature relevée
+        //EEPROM.write(0,temp);
+        
+        setBatteryLevel(OregonMessageBuffer, bat);
+        setTemperature(OregonMessageBuffer, temp);
+       
+        #ifndef THN132N
+          // Set Humidity
+          float humidity = dht.getHumidity();
+          TinySerial.print("Humidity : ");TinySerial.print(humidity);TinySerial.write('%'); TinySerial.println();
+          setHumidity(OregonMessageBuffer, humidity);
+        #endif  
+       
+        // Calculate the checksum
+        calculateAndSetChecksum(OregonMessageBuffer);
+             
+        // Send the Message over RF
+        sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
+        // Send a "pause"
+        SEND_LOW();
+        delayMicroseconds(TWOTIME*8);
+        // Send a copie of the first message. The v2.1 protocol send the message two time 
+        sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
+        SEND_LOW();
+      }
+      else {
+        TinySerial.println("getTemperature failed");
+      }
+        
+      cnt = 0;
+    }
+    else {
+      cnt++;
+    }
+    
+    system_sleep();
+    
+  }
   
 }
+
+    Status API Training Shop Blog About 
+
+    © 2016 GitHub, Inc. Terms Privacy Security Contact Help 
+
