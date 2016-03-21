@@ -47,8 +47,9 @@ int counter = 15;     // Nombre de cycles entre chaque transmission (1 cycles = 
 #define SERIAL_RX PB3 // pin 2 // INPUT
 #define SERIAL_TX PB4 // pin 3 // OUTPUT
 
-#define SONDE PB1 // pin 6 // data sonde
+#define SONDE 1 // pin 6 // data sonde
 
+const byte TX_PIN = 0;  // pin 5 // data transmetteur
 
 /****************   Fin de configuration    *****************/
 
@@ -82,8 +83,6 @@ volatile boolean f_wdt = 1;
 SoftwareSerial TinySerial(SERIAL_RX, SERIAL_TX); // RX, TX
 
 int cnt = 0;  // Initialisation du compte de cycle
- 
-const byte TX_PIN = 0;
  
 const unsigned long TIME = 512;
 const unsigned long TWOTIME = TIME*2;
