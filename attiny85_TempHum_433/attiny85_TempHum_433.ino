@@ -41,7 +41,7 @@ Ain2       (D  4)  PB4  3|    |6   PB1  (D  1)        pwm1
 #define NODE_ID 0xCC // Identifiant unique de votre DATA_PIN (hexadecimal)
 #define LOW_BATTERY_LEVEL 3000   // Voltage minumum (mV) avant d'indiquer batterie faible
 #define WDT_COUNT  15     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 120s soit 2 minutes)
-// commentez la ligne suivante si vous utilisez une DATA_PIN DHT11 ou DHT22
+// commentez la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
 #define TEMP_ONLY   // DATA_PIN de température simple (ds18b20)
 
 #define SERIAL_RX PB3 // pin 2 // INPUT
