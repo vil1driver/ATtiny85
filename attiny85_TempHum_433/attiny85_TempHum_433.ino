@@ -520,7 +520,9 @@ void loop()
       if (getTemperature(&temp)) {
 	  
 		// Get the battery state
-		lowBattery = readVcc() < LOW_BATTERY_LEVEL;
+		uint16_t voltage = readVcc();
+		lowBattery = voltage < LOW_BATTERY_LEVEL;
+		TinySerial.print("Battery : ");TinySerial.print(voltage);TinySerial.write('mV'); TinySerial.println();
       
         TinySerial.print("Temperature : ");TinySerial.print(temp);TinySerial.write(176); // caractère °
         TinySerial.write('C'); TinySerial.println();
