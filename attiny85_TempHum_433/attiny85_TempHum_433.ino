@@ -478,6 +478,7 @@ ISR(WDT_vect) {
   count++;
 } 
 
+// Helper function to read battery voltage, return value in millivolts
 uint16_t readVcc()
 {  
   // Read bandgap reference voltage (1.1V) with reference at Vcc (?V)
@@ -499,13 +500,14 @@ uint16_t readVcc()
 void loop()
 {
   
+  system_sleep();
+  
   if (f_wdt) {	// wait for timed out watchdog / flag is set when a watchdog timeout occurs
     
-    f_wdt=false; // reset WDT Flag
+		f_wdt=false; // reset WDT Flag
    
     
-      // Get the battery state
-      lowBattery = readVcc() < LOW_BATTERY_LEVEL;
+      
       
       
       // Get Temperature, humidity and battery level from sensors
@@ -516,6 +518,9 @@ void loop()
       
       
       if (getTemperature(&temp)) {
+	  
+		// Get the battery state
+		lowBattery = readVcc() < LOW_BATTERY_LEVEL;
       
         TinySerial.print("Temperature : ");TinySerial.print(temp);TinySerial.write(176); // caractère °
         TinySerial.write('C'); TinySerial.println();
@@ -556,9 +561,6 @@ void loop()
         TinySerial.println("getTemperature failed");
       }
         
-     
-    system_sleep();
-    
-  }
+    }
   
 }
