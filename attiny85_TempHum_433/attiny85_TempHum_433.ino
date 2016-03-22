@@ -478,16 +478,22 @@ ISR(WDT_vect) {
   count++;
 } 
 
-// Helper function to read battery voltage, return value in millivolts
-uint16_t readVcc(void) {
-  uint16_t result;
-  // Read 1.1V reference against Vcc
-  ADMUX = (0<<REFS0) | (12<<MUX0);
-  delay(2); // Wait for Vref to settle
-  ADCSRA |= (1<<ADSC); // Convert
-  while (bit_is_set(ADCSRA,ADSC));
-  result = ADCW;
-  return 1018500L / result; // Back-calculate AVcc in mV
+uint16_t readVcc()
+{  
+  // Read bandgap reference voltage (1.1V) with reference at Vcc (?V)
+  ADMUX = _BV(MUX3) | _BV(MUX2);
+  
+  // Wait for voltage reference reference to settle, 3ms is minimum
+  _delay_ms(5);
+  
+  // Convert analog to digital twice (first value is unreliable)
+  ADCSRA |= _BV(ADSC);
+  while(bit_is_set(ADCSRA,ADSC));
+  ADCSRA |= _BV(ADSC);
+  while(bit_is_set(ADCSRA,ADSC));
+
+  // Convert the value to millivolts
+  return 1126400L / ADC;
 }
  
 void loop()
