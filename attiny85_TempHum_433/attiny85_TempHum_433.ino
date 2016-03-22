@@ -47,7 +47,7 @@ Ain2       (D  4)  PB4  3|    |6   PB1  (D  1)        pwm1
 #define SERIAL_RX PB3 // pin 2 // INPUT
 #define SERIAL_TX PB4 // pin 3 // OUTPUT
 
-#define DATA_PIN 1 // pin 6 // data DATA_PIN
+#define DATA_PIN 1 // pin 6 // data de la sonde
 
 const byte TX_PIN = 0;  // pin 5 // data transmetteur
 
