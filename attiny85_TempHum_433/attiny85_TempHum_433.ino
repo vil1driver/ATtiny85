@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * V2 par vil1driver
- * sketch unique pour DATA_PIN ds18b20 ou DHT11/22
+ * sketch unique pour sonde ds18b20 ou DHT11/22
  * choix de la fréquence de transmission
  * fonction niveau de batterie
  * vérification valeur erronées
@@ -38,7 +38,7 @@ Ain2       (D  4)  PB4  3|    |6   PB1  (D  1)        pwm1
 ****************       Confuguration       *****************/
 
 
-#define NODE_ID 0xCC // Identifiant unique de votre DATA_PIN (hexadecimal)
+#define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 3000   // Voltage minumum (mV) avant d'indiquer batterie faible
 #define WDT_COUNT  15     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 120s soit 2 minutes)
 // commentez la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
