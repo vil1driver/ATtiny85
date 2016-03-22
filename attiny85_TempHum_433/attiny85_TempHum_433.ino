@@ -80,13 +80,10 @@ const byte TX_PIN = 0;  // pin 5 // data transmetteur
 volatile boolean f_wdt = 0;
 volatile byte count = WDT_COUNT;
 volatile boolean lowBattery = 0;
-
-SoftwareSerial TinySerial(SERIAL_RX, SERIAL_TX); // RX, TX
-
-int cnt = 0;  // Initialisation du compte de cycle
- 
 const unsigned long TIME = 512;
 const unsigned long TWOTIME = TIME*2;
+
+SoftwareSerial TinySerial(SERIAL_RX, SERIAL_TX); // RX, TX
  
 #define SEND_HIGH() digitalWrite(TX_PIN, HIGH)
 #define SEND_LOW() digitalWrite(TX_PIN, LOW)
@@ -416,16 +413,11 @@ void setup()
 {
   
   setup_watchdog(9);
-  //pinMode(PB3, OUTPUT);
-  //digitalWrite(PB3,HIGH);delay(500);
-  //digitalWrite(PB3,LOW);delay(500);
-  //digitalWrite(PB3,HIGH);
-  pinMode(TX_PIN, OUTPUT);
-  
- 
-  pinMode(PB4, OUTPUT); //tx
+  pinMode(TX_PIN, OUTPUT);	// sortie moniteur série
+
   TinySerial.begin(9600);
   TinySerial.println("\n[Oregon V2.1 encoder]");
+  
  
   SEND_LOW();  
  
