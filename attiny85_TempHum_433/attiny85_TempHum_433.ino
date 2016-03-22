@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * V2 par vil1driver
- * sketch unique pour sonde ds18b20 ou DHT11/22
+ * sketch unique pour DATA_PIN ds18b20 ou DHT11/22
  * choix de la fréquence de transmission
  * fonction niveau de batterie
  * vérification valeur erronées
@@ -38,16 +38,16 @@ Ain2       (D  4)  PB4  3|    |6   PB1  (D  1)        pwm1
 ****************       Confuguration       *****************/
 
 
-#define UnitCode 0xCC // Identifiant unique de votre sonde (hexadecimal)
-#define MinVcc 3000   // Voltage minumum (mV) avant d'indiquer batterie faible
-int counter = 15;     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 120s soit 2 minutes)
-// commentez la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
-#define THN132N   // Sonde de température simple (ds18b20)
+#define NODE_ID 0xCC // Identifiant unique de votre DATA_PIN (hexadecimal)
+#define LOW_BATTERY_LEVEL 3000   // Voltage minumum (mV) avant d'indiquer batterie faible
+#define WDT_COUNT  15     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 120s soit 2 minutes)
+// commentez la ligne suivante si vous utilisez une DATA_PIN DHT11 ou DHT22
+#define TEMP_ONLY   // DATA_PIN de température simple (ds18b20)
 
 #define SERIAL_RX PB3 // pin 2 // INPUT
 #define SERIAL_TX PB4 // pin 3 // OUTPUT
 
-#define SONDE 1 // pin 6 // data sonde
+#define DATA_PIN 1 // pin 6 // data DATA_PIN
 
 const byte TX_PIN = 0;  // pin 5 // data transmetteur
 
@@ -59,10 +59,10 @@ const byte TX_PIN = 0;  // pin 5 // data transmetteur
 #include <avr/wdt.h>
 #include <SoftwareSerial.h>
 
-#ifdef THN132N
+#ifdef TEMP_ONLY
   #include <OneWire.h>
   #define DS18B20 0x28     // Adresse 1-Wire du DS18B20
-  OneWire ds(SONDE); // Création de l'objet OneWire ds
+  OneWire ds(DATA_PIN); // Création de l'objet OneWire ds
 #else
   #include <DHT.h>
   DHT dht;
@@ -77,8 +77,9 @@ const byte TX_PIN = 0;  // pin 5 // data transmetteur
   #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-volatile boolean f_wdt = 1;
-
+volatile boolean f_wdt = 0;
+volatile byte count = WDT_COUNT;
+volatile boolean lowBattery = 0;
 
 SoftwareSerial TinySerial(SERIAL_RX, SERIAL_TX); // RX, TX
 
@@ -91,7 +92,7 @@ const unsigned long TWOTIME = TIME*2;
 #define SEND_LOW() digitalWrite(TX_PIN, LOW)
  
 // Buffer for Oregon message
-#ifdef THN132N
+#ifdef TEMP_ONLY
   byte OregonMessageBuffer[8];
 #else
   byte OregonMessageBuffer[9];
@@ -205,7 +206,7 @@ inline void sendPreamble(void)
  */
 inline void sendPostamble(void)
 {
-#ifdef THN132N
+#ifdef TEMP_ONLY
   sendQuarterLSB(0x00);
 #else
   byte POSTAMBLE[]={0x00};
@@ -340,7 +341,7 @@ int Sum(byte count, const byte* data)
  */
 void calculateAndSetChecksum(byte* data)
 {
-#ifdef THN132N
+#ifdef TEMP_ONLY
     int s = ((Sum(6, data) + (data[6]&0xF) - 0xa) & 0xff);
  
     data[6] |=  (s&0x0F) << 4;     data[7] =  (s&0xF0) >> 4;
@@ -357,7 +358,7 @@ void calculateAndSetChecksum(byte* data)
 // Retourne true si tout va bien, ou false en cas d'erreur
 boolean getTemperature(float *temp){
 
-#ifdef THN132N  
+#ifdef TEMP_ONLY  
   byte data[9], addr[8];
   // data : Données lues depuis le scratchpad
   // addr : adresse du module 1-Wire détecté
@@ -428,18 +429,18 @@ void setup()
  
   SEND_LOW();  
  
-#ifdef THN132N  
+#ifdef TEMP_ONLY  
   // Create the Oregon message for a temperature only sensor (TNHN132N)
   byte ID[] = {0xEA,0x4C};
 #else
   // Create the Oregon message for a temperature/humidity sensor (THGR2228N)
   byte ID[] = {0x1A,0x2D};
-  dht.setup(SONDE);
+  dht.setup(DATA_PIN);
 #endif  
  
   setType(OregonMessageBuffer, ID);
   setChannel(OregonMessageBuffer, 0x20);
-  setId(OregonMessageBuffer, UnitCode);
+  setId(OregonMessageBuffer, NODE_ID);
 }
 
 
@@ -477,50 +478,38 @@ void setup_watchdog(int ii) {
   WDTCR |= _BV(WDIE);
 }
   
-// Watchdog Interrupt Service / is executed when watchdog timed out
-ISR(WDT_vect) {
-  f_wdt=1;  // set global flag
-}
+// Watchdog Interrupt Service / is executed when watchdog timed out 
+ISR(WDT_vect) {   
+  if (count >= WDT_COUNT) {
+   f_wdt=true;  // set WDTl flag
+   count=0;
+  }
+  count++;
+} 
 
 // Helper function to read battery voltage, return value in millivolts
-uint16_t readVcc()
-{  
-  // Read bandgap reference voltage (1.1V) with reference at Vcc (?V)
-  ADMUX = _BV(MUX3) | _BV(MUX2);
-  
-  // Wait for voltage reference reference to settle, 3ms is minimum
-  _delay_ms(5);
-  
-  // Convert analog to digital twice (first value is unreliable)
-  ADCSRA |= _BV(ADSC);
-  while(bit_is_set(ADCSRA,ADSC));
-  ADCSRA |= _BV(ADSC);
-  while(bit_is_set(ADCSRA,ADSC));
-
-  // Convert the value to millivolts
-  return 1126400L / ADC;
+uint16_t readVcc(void) {
+  uint16_t result;
+  // Read 1.1V reference against Vcc
+  ADMUX = (0<<REFS0) | (12<<MUX0);
+  delay(2); // Wait for Vref to settle
+  ADCSRA |= (1<<ADSC); // Convert
+  while (bit_is_set(ADCSRA,ADSC));
+  result = ADCW;
+  return 1018500L / result; // Back-calculate AVcc in mV
 }
  
 void loop()
 {
   
-  if (f_wdt==1) // wait for timed out watchdog / flag is set when a watchdog timeout occurs
-  {  
-    f_wdt=0;  // reset flag
+  if (f_wdt) {	// wait for timed out watchdog / flag is set when a watchdog timeout occurs
+    
+    f_wdt=false; // reset WDT Flag
    
-    if(cnt == counter)  // Nombre de cycle de réveil atteint
-    {
-      // Get the battery voltage
-      int bat;
-      uint16_t voltage = readVcc();
-      TinySerial.print("Battery : ");TinySerial.print(voltage);TinySerial.write('mV'); TinySerial.println();
+    
+      // Get the battery state
+      lowBattery = !(readVcc() >= LOW_BATTERY_LEVEL);
       
-      if (voltage < MinVcc) {
-        bat = 0;  // Low
-      }
-      else {
-        bat = 1;  // High
-      }
       
       // Get Temperature, humidity and battery level from sensors
       float temp;
@@ -537,15 +526,15 @@ void loop()
         // Mémorisation de la tepérature relevée
         //EEPROM.write(0,temp);
         
-        setBatteryLevel(OregonMessageBuffer, bat);
+        setBatteryLevel(OregonMessageBuffer, lowBattery);
         setTemperature(OregonMessageBuffer, temp);
        
-        #ifndef THN132N
+        #ifndef TEMP_ONLY
             // Set Humidity
             float humidity = dht.getHumidity();
             if (isnan(humidity)) {
                 TinySerial.println("Failed reading humidity from DHT");
-                setHumidity(OregonMessageBuffer, 52);
+                setHumidity(OregonMessageBuffer, 52);	// Valeur par défaut en cas de lecture erronée
             }
             else
             {
@@ -571,10 +560,7 @@ void loop()
       }
         
       cnt = 0;
-    }
-    else {
-      cnt++;
-    }
+    
     
     system_sleep();
     
