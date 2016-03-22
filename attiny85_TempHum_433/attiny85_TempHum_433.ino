@@ -20,9 +20,9 @@
  *
  * V2 par vil1driver
  * sketch unique pour sonde ds18b20 ou DHT11/22
- * choix de la fréquence de transmission
+ * choix de la périodicité de transmission
  * fonction niveau de batterie
- * vérification valeur erronées
+ * 
  * 
 */
 
