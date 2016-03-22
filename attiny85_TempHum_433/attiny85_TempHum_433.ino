@@ -499,7 +499,7 @@ void loop()
    
     
       // Get the battery state
-      lowBattery = !(readVcc() >= LOW_BATTERY_LEVEL);
+      lowBattery = readVcc() >= LOW_BATTERY_LEVEL;
       
       
       // Get Temperature, humidity and battery level from sensors
