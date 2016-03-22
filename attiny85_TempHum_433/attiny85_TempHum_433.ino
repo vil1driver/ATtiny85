@@ -68,7 +68,7 @@ const byte TX_PIN = 0;  // pin 5 // data transmetteur
   DHT dht;
 #endif
 
-#include <EEPROM.h>
+//#include <EEPROM.h>
 
 #ifndef cbi
   #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
