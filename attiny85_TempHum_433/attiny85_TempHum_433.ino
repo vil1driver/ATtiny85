@@ -21,19 +21,20 @@
  * V2 par vil1driver
  * sketch unique pour sonde ds18b20 ou DHT11/22
  * choix de la périodicité de transmission
- * fonction niveau de batterie
+ * remontée niveau de batterie
  * 
  * 
 */
 
 /************************************************************
+
     emplacement des PIN de la puce ATtiny85
-                         +-/\-+
-Ain0       (D  5)  PB5  1|    |8   VCC
-Ain3       (D  3)  PB3  2|    |7   PB2  (D  2)  INT0  Ain1
-Ain2       (D  4)  PB4  3|    |6   PB1  (D  1)        pwm1
-                   GND  4|    |5   PB0  (D  0)        pwm0
-                         +----+ 
+                     +----+
+Ain0   (D  5)  PB5  1|*   |8   VCC
+Ain3   (D  3)  PB3  2|    |7   PB2 (D  2) Ain1
+Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1 - sensor pin
+               GND  4|    |5   PB0 (D  0) pwm0 - RF433 tx pin
+                     +----+ 
              
 ****************       Confuguration       *****************/
 
@@ -50,6 +51,7 @@ Ain2       (D  4)  PB4  3|    |6   PB1  (D  1)        pwm1
 #define DATA_PIN 1 // pin 6 // data de la sonde
 
 const byte TX_PIN = 0;  // pin 5 // data transmetteur
+
 
 /****************   Fin de configuration    *****************/
 
