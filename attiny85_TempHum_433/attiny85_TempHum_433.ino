@@ -499,7 +499,7 @@ void loop()
    
     
       // Get the battery state
-      lowBattery = readVcc() >= LOW_BATTERY_LEVEL;
+      lowBattery = readVcc() < LOW_BATTERY_LEVEL;
       
       
       // Get Temperature, humidity and battery level from sensors
@@ -517,7 +517,7 @@ void loop()
         // Mémorisation de la tepérature relevée
         //EEPROM.write(0,temp);
         
-        setBatteryLevel(OregonMessageBuffer, lowBattery);
+        setBatteryLevel(OregonMessageBuffer, !lowBattery);
         setTemperature(OregonMessageBuffer, temp);
        
         #ifndef TEMP_ONLY
