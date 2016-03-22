@@ -550,9 +550,7 @@ void loop()
         TinySerial.println("getTemperature failed");
       }
         
-      cnt = 0;
-    
-    
+     
     system_sleep();
     
   }
