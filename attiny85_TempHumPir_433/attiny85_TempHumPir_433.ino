@@ -52,8 +52,8 @@ const byte TX_PIN = 4;  // pin 3 // data transmetteur
 
 const int PIR_PIN = 0; // pin 5 // wake up PIR output
 
-#define PIR_HOUSE_CODE 01111	// code maison du capteur de mouvement
-#define PIR_UNIT_CODE 00010		// code unite du capteur de mouvement
+#define PIR_HOUSE_CODE "01111"	// code maison du capteur de mouvement
+#define PIR_UNIT_CODE "00010"		// code unite du capteur de mouvement
 
 
 /****************   Fin de configuration    *****************/
