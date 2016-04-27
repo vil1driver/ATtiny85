@@ -497,7 +497,7 @@ uint16_t readVcc(void) {
   uint16_t result;
   // Read 1.1V reference against Vcc
   ADMUX = (0<<REFS0) | (12<<MUX0);
-  delay(2); // Wait for Vref to settle
+  delay(5); // Wait for Vref to settle
   ADCSRA |= (1<<ADSC); // Convert
   while (bit_is_set(ADCSRA,ADSC));
   result = ADCW;
