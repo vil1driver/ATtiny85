@@ -566,7 +566,7 @@ void loop()
 	if (Motion) {
    
 		mySwitch.switchOn("01111", "00010");
-		delay(5000);
+		delay(10000);
    
 	}
   
