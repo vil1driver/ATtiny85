@@ -48,10 +48,12 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 #define TEMP_ONLY   // sonde de température simple (ds18b20)
 
 #define DATA_PIN 3 // pin 2 // data de la sonde
-
 const byte TX_PIN = 4;  // pin 3 // data transmetteur
 
-const int wakeUpPin = 0; // pin 5 // wake up PIR output
+const int PIR_PIN = 0; // pin 5 // wake up PIR output
+
+#define PIR_HOUSE_CODE 01111	// code maison du capteur de mouvement
+#define PIR_UNIT_CODE 00010		// code unite du capteur de mouvement
 
 
 /****************   Fin de configuration    *****************/
@@ -416,7 +418,7 @@ boolean getTemperature(float *temp){
 void setup()
 {
   
- pinMode(wakeUpPin, INPUT); 
+ pinMode(PIR_PIN, INPUT); 
  mySwitch.enableTransmit(TX_PIN);
  
  PCMSK |= bit (PCINT0); 
@@ -489,7 +491,7 @@ ISR(WDT_vect) {
 
 ISR (PCINT0_vect) 
 {
- Motion = digitalRead(0);
+ Motion = true;
 }
 
 // read battery voltage, return value in millivolts
@@ -565,7 +567,8 @@ void loop()
 	
 	if (Motion) {
    
-		mySwitch.switchOn("01111", "00010");
+		Motion = false;
+		mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
 		delay(10000);
    
 	}
