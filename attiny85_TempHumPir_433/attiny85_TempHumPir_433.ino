@@ -50,6 +50,9 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 #define DATA_PIN 3 // pin 2 // data de la sonde
 const byte TX_PIN = 4;  // pin 3 // data transmetteur
 
+// commentez (ou supprimez) la ligne suivante si vous n'utilisez pas de capteur de mouvement
+//#define PIR
+
 const int PIR_PIN = 0; // pin 5 // wake up PIR output
 
 #define PIR_HOUSE_CODE "01111"	// code maison du capteur de mouvement
@@ -65,8 +68,10 @@ const int PIR_PIN = 0; // pin 5 // wake up PIR output
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
-#include  "RCSwitch.h"
-
+#ifdef PIR
+	#include  "RCSwitch.h"
+#endif
+	
 #ifdef TEMP_ONLY
   #include "OneWire.h"
   #define DS18B20 0x28     // Adresse 1-Wire du DS18B20
@@ -83,8 +88,10 @@ const int PIR_PIN = 0; // pin 5 // wake up PIR output
   #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-RCSwitch mySwitch = RCSwitch();
-volatile int Motion = LOW;
+#ifdef PIR
+	RCSwitch mySwitch = RCSwitch();
+	volatile int Motion = LOW;
+#endif
 
 volatile boolean f_wdt = 0;
 volatile byte count = WDT_COUNT;
@@ -418,16 +425,18 @@ boolean getTemperature(float *temp){
 void setup()
 {
   
- pinMode(PIR_PIN, INPUT); 
- mySwitch.enableTransmit(TX_PIN);
- 
- PCMSK |= bit (PCINT0); 
- GIFR |= bit (PCIF); // clear any outstanding interrupts
- GIMSK |= bit (PCIE); // enable pin change interrupts 
- sei();
+ #ifdef PIR
+	 pinMode(PIR_PIN, INPUT); 
+	 mySwitch.enableTransmit(TX_PIN);
+	 
+	 PCMSK |= bit (PCINT0); 
+	 GIFR |= bit (PCIF); // clear any outstanding interrupts
+	 GIMSK |= bit (PCIE); // enable pin change interrupts 
+	 sei();
+#endif
  
  setup_watchdog(9);
- pinMode(TX_PIN, OUTPUT);	// sortie trasmetteur
+ pinMode(TX_PIN, OUTPUT);	// sortie transmetteur
 
   SEND_LOW();  
  
@@ -489,23 +498,32 @@ ISR(WDT_vect) {
   count++;
 } 
 
-ISR (PCINT0_vect) 
-{
- Motion = true;
+#ifdef PIR
+	ISR (PCINT0_vect) 
+	{
+	 Motion = true;
+	}
+#endif
+
+
+//reads internal 1V1 reference against VCC
+//return number 0 .. 1023 
+int analogReadInternal() {
+  ADMUX = _BV(MUX3) | _BV(MUX2); // For ATtiny85
+  delay(3); // Wait for Vref to settle
+  ADCSRA |= _BV(ADSC); // Convert
+  while (bit_is_set(ADCSRA,ADSC));
+  uint8_t low = ADCL;
+  return (ADCH << 8) | low; 
 }
 
-// read battery voltage, return value in millivolts
-uint16_t readVcc(void) {
-  uint16_t result;
-  // Read 1.1V reference against Vcc
-  ADMUX = (0<<REFS0) | (12<<MUX0);
-  delay(5); // Wait for Vref to settle
-  ADCSRA |= (1<<ADSC); // Convert
-  while (bit_is_set(ADCSRA,ADSC));
-  result = ADCW;
-  return 1125300L / result; // Back-calculate AVcc in mV
+//calculate VCC based on internal referrence
+//return voltage in mV
+int readVCC() {
+  return ((uint32_t)1024 * (uint32_t)1100) / analogReadInternal();
 }
- 
+
+
 void loop()
 {
   
@@ -527,9 +545,11 @@ void loop()
       
       if (getTemperature(&temp)) {
 	  
-		// Get the battery state
-		lowBattery = readVcc() < LOW_BATTERY_LEVEL;
-		        
+	// Get the battery state
+	int vcc = readVCC();
+
+        lowBattery = vcc < LOW_BATTERY_LEVEL;
+	        
         setBatteryLevel(OregonMessageBuffer, !lowBattery);	// 0=low, 1=high
         setTemperature(OregonMessageBuffer, temp);
        
@@ -565,12 +585,13 @@ void loop()
         
     }
 	
-	if (Motion) {
-   
-		Motion = false;
-		mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
-		delay(10000);
-   
-	}
-  
+	#ifdef PIR
+		if (Motion) {
+	   
+			Motion = false;
+			mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
+			delay(10000);
+	   
+		}
+	#endif
 }
