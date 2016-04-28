@@ -41,7 +41,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 
 
 #define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
-#define LOW_BATTERY_LEVEL 2800   // Voltage minumum (mV) avant d'indiquer batterie faible
+#define LOW_BATTERY_LEVEL 2700   // Voltage minumum (mV) avant d'indiquer batterie faible
 #define WDT_COUNT  15     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 120s soit 2 minutes)
 
 // commentez (ou supprimez) la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
@@ -501,7 +501,7 @@ ISR(WDT_vect) {
 #ifdef PIR
 	ISR (PCINT0_vect) 
 	{
-	 Motion = true;
+	 Motion = HIGH;
 	}
 #endif
 
@@ -588,7 +588,7 @@ void loop()
 	#ifdef PIR
 		if (Motion) {
 	   
-			Motion = false;
+			Motion = LOW;
 			mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
 			delay(10000);
 	   
