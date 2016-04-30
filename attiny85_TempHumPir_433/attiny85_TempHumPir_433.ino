@@ -370,14 +370,16 @@ void calculateAndSetChecksum(byte* data)
 boolean getTemperature(float *temp){
 
 #ifdef TEMP_ONLY  
-  byte data[9], addr[8];
+  byte present = 0;
+  byte data[9];
+  byte addr[8];
   // data : Données lues depuis le scratchpad
   // addr : adresse du module 1-Wire détecté
 
-
   if (!ds.search(addr)) { // Recherche un module 1-Wire
   ds.reset_search();    // Réinitialise la recherche de module
-  return false;         // Retourne une erreur
+  delay(250);
+  //return false;         // Retourne une erreur
   }
 
   if (OneWire::crc8(addr, 7) != addr[7]) // Vérifie que l'adresse a été correctement reçue
@@ -385,14 +387,14 @@ boolean getTemperature(float *temp){
 
   if (addr[0] != DS18B20) // Vérifie qu'il s'agit bien d'un DS18B20
   return false;         // Si ce n'est pas le cas on retourne une erreur
-
+  
   ds.reset();             // On reset le bus 1-Wire
   ds.select(addr);        // On sélectionne le DS18B20
 
   ds.write(0x44, 1);      // On lance une prise de mesure de température
   delay(1000);             // Et on attend la fin de la mesure
 
-  ds.reset();             // On reset le bus 1-Wire
+  present = ds.reset();             // On reset le bus 1-Wire
   ds.select(addr);        // On sélectionne le DS18B20
   ds.write(0xBE);         // On envoie une demande de lecture du scratchpad
 
@@ -523,11 +525,12 @@ int readVCC() {
 void loop()
 {
   
+
   if (count <= 0) {	// on attend que le nombre de cycle soit atteint
     	
      count=WDT_COUNT;  // reset counter
           
-           
+      
       // Get Temperature, humidity and battery level from sensors
 	  
       float temp; 
@@ -581,7 +584,7 @@ void loop()
 			//delayMicroseconds(TWOTIME*8);
                         // Send a copie of the first message
                         //mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
-			delay(1000);
+                        delay(1000);
                         	   
 		}
 	#endif
