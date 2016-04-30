@@ -40,7 +40,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 ****************       Confuguration       *****************/
 
 
-#define NODE_ID 0xCE // Identifiant unique de votre sonde (hexadecimal)
+#define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2700   // Voltage minumum (mV) avant d'indiquer batterie faible
 #define WDT_COUNT  15     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 120s soit 2 minutes)
 
@@ -65,8 +65,8 @@ const int PIR_PIN = 0; // pin 5 // wake up PIR output
 
 
 // Chargement des librairies
-#include <avr/sleep.h>
-#include <avr/wdt.h>
+#include <avr/sleep.h>    // Sleep Modes
+#include <avr/wdt.h>      // Watchdog timer
 #include <avr/interrupt.h>
 #ifdef PIR
 	#include  "RCSwitch.h"
@@ -510,7 +510,7 @@ ISR(WDT_vect) {
 //return number 0 .. 1023 
 int analogReadInternal() {
   ADMUX = _BV(MUX3) | _BV(MUX2); // For ATtiny85
-  delay(3); // Wait for Vref to settle
+  delay(5); // Wait for Vref to settle
   ADCSRA |= _BV(ADSC); // Convert
   while (bit_is_set(ADCSRA,ADSC));
   uint8_t low = ADCL;
@@ -537,11 +537,7 @@ void loop()
            
       // Get Temperature, humidity and battery level from sensors
 	  
-      float temp;
-      
-      // Lecture de la dernière valeur de température
-      //float last = EEPROM.read(0);
-      
+      float temp; 
       
       if (getTemperature(&temp)) {
 	  
@@ -590,7 +586,7 @@ void loop()
 	   
 			mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
 			delay(1000);
-	   
+                        	   
 		}
 	#endif
 }
