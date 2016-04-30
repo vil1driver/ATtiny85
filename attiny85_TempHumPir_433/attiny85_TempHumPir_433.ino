@@ -495,7 +495,7 @@ ISR(WDT_vect) {
 } 
 
 #ifdef PIR
-  ISR (PCINT0_vect) 
+  ISR(PCINT0_vect) 
   {
     Motion = digitalRead(PIR_PIN);
   }
