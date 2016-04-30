@@ -40,7 +40,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 ****************       Confuguration       *****************/
 
 
-#define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
+#define NODE_ID 0xCE // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2700   // Voltage minumum (mV) avant d'indiquer batterie faible
 #define WDT_COUNT  15     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 120s soit 2 minutes)
 
@@ -51,12 +51,12 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 const byte TX_PIN = 4;  // pin 3 // data transmetteur
 
 // commentez (ou supprimez) la ligne suivante si vous n'utilisez pas de capteur de mouvement
-//#define PIR
+#define PIR
 
 const int PIR_PIN = 0; // pin 5 // wake up PIR output
 
-#define PIR_HOUSE_CODE "01111"	// code maison du capteur de mouvement
-#define PIR_UNIT_CODE "00010"		// code unite du capteur de mouvement
+#define PIR_HOUSE_CODE 1	// code maison du capteur de mouvement
+#define PIR_UNIT_CODE 1		// code unite du capteur de mouvement
 
 
 /****************   Fin de configuration    *****************/
@@ -90,10 +90,10 @@ const int PIR_PIN = 0; // pin 5 // wake up PIR output
 
 #ifdef PIR
 	RCSwitch mySwitch = RCSwitch();
-	volatile int Motion = LOW;
+	volatile byte Motion = LOW;
 #endif
 
-volatile boolean f_wdt = 0;
+volatile boolean f_wdt = false;
 volatile byte count = WDT_COUNT;
 volatile boolean lowBattery = 0;
 const unsigned long TIME = 512;
@@ -501,7 +501,7 @@ ISR(WDT_vect) {
 #ifdef PIR
 	ISR (PCINT0_vect) 
 	{
-	 Motion = HIGH;
+	 Motion = digitalRead(PIR_PIN);
 	}
 #endif
 
@@ -588,9 +588,8 @@ void loop()
 	#ifdef PIR
 		if (Motion) {
 	   
-			Motion = LOW;
 			mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
-			delay(10000);
+			delay(1000);
 	   
 		}
 	#endif
