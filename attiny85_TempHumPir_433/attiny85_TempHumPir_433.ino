@@ -523,7 +523,7 @@ int readVCC() {
 void loop()
 {
   
-  if (count == 0) {	// on attend que le nombre de cycle soit atteint
+  if (count <= 0) {	// on attend que le nombre de cycle soit atteint
     	
      count=WDT_COUNT;  // reset counter
           
