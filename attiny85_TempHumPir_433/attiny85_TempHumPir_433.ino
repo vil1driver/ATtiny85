@@ -578,6 +578,9 @@ void loop()
 		if (Motion) {
 	   
 			mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
+			//delayMicroseconds(TWOTIME*8);
+                        // Send a copie of the first message
+                        //mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
 			delay(1000);
                         	   
 		}
