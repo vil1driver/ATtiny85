@@ -42,7 +42,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 
 #define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2700   // Voltage minumum (mV) avant d'indiquer batterie faible
-#define WDT_COUNT  15     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 120s soit 2 minutes)
+#define WDT_COUNT  5     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 15x8 = 40s)
 
 // commentez (ou supprimez) la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
 #define TEMP_ONLY   // sonde de température simple (ds18b20)
@@ -93,8 +93,8 @@ const int PIR_PIN = 0; // pin 5 // wake up PIR output
 	volatile byte Motion = LOW;
 #endif
 
-volatile boolean f_wdt = false;
-volatile byte count = WDT_COUNT;
+
+volatile int count = 0;
 volatile boolean lowBattery = 0;
 const unsigned long TIME = 512;
 const unsigned long TWOTIME = TIME*2;
@@ -491,18 +491,14 @@ void setup_watchdog(int ii) {
   
 // Watchdog Interrupt Service / is executed when watchdog timed out 
 ISR(WDT_vect) {   
-  if (count >= WDT_COUNT) {
-   f_wdt=true;  // set WDTl flag
-   count=0;
-  }
-  count++;
+  count--;
 } 
 
 #ifdef PIR
-	ISR (PCINT0_vect) 
-	{
-	 Motion = digitalRead(PIR_PIN);
-	}
+  ISR (PCINT0_vect) 
+  {
+    Motion = digitalRead(PIR_PIN);
+  }
 #endif
 
 
@@ -527,12 +523,9 @@ int readVCC() {
 void loop()
 {
   
-  system_sleep();
-  
-  if (f_wdt) {	// on attend que le nombre de cycle soit atteint
-    
-		f_wdt=false; // reset flag
-   
+  if (count == 0) {	// on attend que le nombre de cycle soit atteint
+    	
+     count=WDT_COUNT;  // reset counter
           
            
       // Get Temperature, humidity and battery level from sensors
@@ -589,4 +582,6 @@ void loop()
                         	   
 		}
 	#endif
+
+  system_sleep();
 }
