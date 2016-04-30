@@ -95,7 +95,7 @@ const int PIR_PIN = 0; // pin 5 // wake up PIR output
 
 
 volatile int count = 0;
-volatile boolean lowBattery = 0;
+volatile boolean lowBattery = false;
 const unsigned long TIME = 512;
 const unsigned long TWOTIME = TIME*2;
 
