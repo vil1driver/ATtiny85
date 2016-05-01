@@ -19,11 +19,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * V2 par vil1driver
+ * 
+ * fonctionnement à 1mhz au lieu de 8mhz
  * sketch unique pour sonde ds18b20 ou DHT11/22
  * choix de la périodicité de transmission
  * remontée niveau de batterie
  * 
- * ajout d'au capteur PIR ou reed
+ * ajout d'au capteur PIR ou reed ou tilt
  *
 */
 
@@ -40,9 +42,9 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 ****************       Confuguration       *****************/
 
 
-#define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
+#define NODE_ID 0xCE // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2700   // Voltage minumum (mV) avant d'indiquer batterie faible
-#define WDT_COUNT  5     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
+#define WDT_COUNT  30     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
 
 // commentez (ou supprimez) la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
 #define TEMP_ONLY   // sonde de température simple (ds18b20)
@@ -51,7 +53,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 const byte TX_PIN = 4;  // pin 3 // data transmetteur
 
 // commentez (ou supprimez) la ligne suivante si vous n'utilisez pas de capteur de mouvement
-//#define PIR
+#define PIR
 
 const int PIR_PIN = 0; // pin 5 // wake up PIR output
 
@@ -60,8 +62,6 @@ const int PIR_PIN = 0; // pin 5 // wake up PIR output
 
 
 /****************   Fin de configuration    *****************/
-
-
 
 
 // Chargement des librairies
@@ -426,7 +426,9 @@ boolean getTemperature(float *temp){
  
 void setup()
 {
-  
+ CLKPR = (1<<CLKPCE);  // running at 1 mhz
+ CLKPR = 0x00;
+ 
  #ifdef PIR
 	 pinMode(PIR_PIN, INPUT); 
 	 mySwitch.enableTransmit(TX_PIN);
@@ -497,6 +499,7 @@ ISR(WDT_vect) {
 } 
 
 #ifdef PIR
+  // PIN Interrupt Service
   ISR(PCINT0_vect) 
   {
     Motion = digitalRead(PIR_PIN);
