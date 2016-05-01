@@ -426,9 +426,7 @@ boolean getTemperature(float *temp){
  
 void setup()
 {
- CLKPR = (1<<CLKPCE);  // running at 1 mhz
- CLKPR = 0x00;
- 
+
  #ifdef PIR
 	 pinMode(PIR_PIN, INPUT); 
 	 mySwitch.enableTransmit(TX_PIN);
