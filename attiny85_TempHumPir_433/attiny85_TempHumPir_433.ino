@@ -20,7 +20,6 @@
  *
  * V2 par vil1driver
  * 
- * fonctionnement à 1mhz au lieu de 8mhz
  * sketch unique pour sonde ds18b20 ou DHT11/22
  * choix de la périodicité de transmission
  * remontée niveau de batterie
