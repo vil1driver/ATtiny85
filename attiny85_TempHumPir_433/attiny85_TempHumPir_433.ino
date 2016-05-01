@@ -42,7 +42,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 ****************       Confuguration       *****************/
 
 
-#define NODE_ID 0xCE // Identifiant unique de votre sonde (hexadecimal)
+#define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2700   // Voltage minumum (mV) avant d'indiquer batterie faible
 #define WDT_COUNT  30     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
 
@@ -53,7 +53,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 const byte TX_PIN = 4;  // pin 3 // data transmetteur
 
 // commentez (ou supprimez) la ligne suivante si vous n'utilisez pas de capteur de mouvement
-#define PIR
+//#define PIR
 
 const int PIR_PIN = 0; // pin 5 // wake up PIR output
 
