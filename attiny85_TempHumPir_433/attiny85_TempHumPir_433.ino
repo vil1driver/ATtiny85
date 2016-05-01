@@ -426,6 +426,9 @@ boolean getTemperature(float *temp){
 void setup()
 {
 
+ CLKPR = (1<<CLKPCE);  
+ CLKPR = B00000000;  // set fuses for running at 8mhz
+ 
  #ifdef PIR
 	 pinMode(PIR_PIN, INPUT); 
 	 mySwitch.enableTransmit(TX_PIN);
