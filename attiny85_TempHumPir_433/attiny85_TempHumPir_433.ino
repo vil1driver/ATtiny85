@@ -43,18 +43,18 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 
 #define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2600   // Voltage minumum (mV) avant d'indiquer batterie faible
-#define WDT_COUNT  5     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
+#define WDT_COUNT 5     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
 
 // commentez (ou supprimez) la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
 #define TEMP_ONLY   // sonde de température simple (ds18b20)
 
 #define DATA_PIN 3 // pin 2 // data de la sonde
-const byte TX_PIN = 4;  // pin 3 // data transmetteur
+#define TX_PIN 4  // pin 3 // data transmetteur
 
 // commentez (ou supprimez) la ligne suivante si vous n'utilisez pas de capteur de mouvement
 //#define PIR
 
-const int PIR_PIN = 0; // pin 5 // wake up PIR output
+#define PIR_PIN 0 // pin 5 // wake up PIR output
 
 #define PIR_HOUSE_CODE 1	// code maison du capteur de mouvement
 #define PIR_UNIT_CODE 1		// code unite du capteur de mouvement
