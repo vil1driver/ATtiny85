@@ -56,8 +56,8 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 
 #define PIR_PIN 0 // pin 5 // wake up PIR output
 
-#define PIR_HOUSE_CODE 1	// code maison du capteur de mouvement
-#define PIR_UNIT_CODE 1		// code unite du capteur de mouvement
+#define PIR_HOUSE_CODE 'E'  // code maison du capteur de mouvement
+#define PIR_UNIT_CODE 6   // code unite du capteur de mouvement
 
 
 /****************   Fin de configuration    *****************/
@@ -68,9 +68,9 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 #include <avr/wdt.h>      // Watchdog timer
 #include <avr/interrupt.h>
 #ifdef PIR
-	#include  "RCSwitch.h"
+  #include  "x10rf.h"
 #endif
-	
+  
 #ifdef TEMP_ONLY
   #include "OneWire.h"
   #define DS18B20 0x28     // Adresse 1-Wire du DS18B20
@@ -88,8 +88,8 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 #endif
 
 #ifdef PIR
-	RCSwitch mySwitch = RCSwitch();
-	volatile byte Motion = LOW;
+  x10rf myx10 = x10rf(TX_PIN,0,2);
+  volatile byte Motion = LOW;
 #endif
 
 
@@ -430,17 +430,17 @@ void setup()
  CLKPR = B00000000;  // set the fuses to 8mhz clock-speed.
  
  #ifdef PIR
-	 pinMode(PIR_PIN, INPUT); 
-	 mySwitch.enableTransmit(TX_PIN);
-	 
-	 PCMSK |= bit (PCINT0); 
-	 GIFR |= bit (PCIF); // clear any outstanding interrupts
-	 GIMSK |= bit (PCIE); // enable pin change interrupts 
-	 sei();
+   pinMode(PIR_PIN, INPUT); 
+   myx10.begin();
+   
+   PCMSK |= bit (PCINT0); 
+   GIFR |= bit (PCIF); // clear any outstanding interrupts
+   GIMSK |= bit (PCIE); // enable pin change interrupts 
+   sei();
 #endif
  
  setup_watchdog(9);
- pinMode(TX_PIN, OUTPUT);	// sortie transmetteur
+ pinMode(TX_PIN, OUTPUT); // sortie transmetteur
 
   SEND_LOW();  
  
@@ -529,23 +529,23 @@ void loop()
 {
   
 
-  if (count <= 0) {	// on attend que le nombre de cycle soit atteint
-    	
+  if (count <= 0) { // on attend que le nombre de cycle soit atteint
+      
      count=WDT_COUNT;  // reset counter
           
       
       // Get Temperature, humidity and battery level from sensors
-	  
+    
       float temp; 
       
       if (getTemperature(&temp)) {
-	  
-	// Get the battery state
-	int vcc = readVCC();
+    
+  // Get the battery state
+  int vcc = readVCC();
 
         lowBattery = vcc < LOW_BATTERY_LEVEL;
-	        
-        setBatteryLevel(OregonMessageBuffer, !lowBattery);	// 0=low, 1=high
+          
+        setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
         setTemperature(OregonMessageBuffer, temp);
        
         #ifndef TEMP_ONLY
@@ -553,7 +553,7 @@ void loop()
             float humidity = dht.getHumidity();
             if (isnan(humidity)) {
                 
-                setHumidity(OregonMessageBuffer, 52);	// Valeur par défaut en cas de lecture erronée
+                setHumidity(OregonMessageBuffer, 52); // Valeur par défaut en cas de lecture erronée
             }
             else
             {
@@ -579,18 +579,13 @@ void loop()
       }
         
     }
-	
-	#ifdef PIR
-		if (Motion) {
-	   
-			mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
-			//delayMicroseconds(TWOTIME*8);
-                        // Send a copie of the first message
-                        //mySwitch.switchOn(PIR_HOUSE_CODE, PIR_UNIT_CODE);
-                        delay(1000);
-                        	   
-		}
-	#endif
+  
+  #ifdef PIR
+    if (Motion) {
+     myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE, 1); // Switch On
+     delay(1000);
+    }
+  #endif
 
   system_sleep();
 }
