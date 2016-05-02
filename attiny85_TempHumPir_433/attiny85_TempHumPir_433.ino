@@ -427,7 +427,7 @@ void setup()
 {
 
  CLKPR = (1<<CLKPCE);  
- CLKPR = B00000000;  // set fuses for running at 8mhz
+ CLKPR = B00000000;  // set the fuses to 8mhz clock-speed.
  
  #ifdef PIR
 	 pinMode(PIR_PIN, INPUT); 
