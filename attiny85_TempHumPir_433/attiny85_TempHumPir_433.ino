@@ -94,7 +94,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 
 
 volatile int count = 0;
-volatile boolean lowBattery = false;
+boolean lowBattery = false;
 const unsigned long TIME = 512;
 const unsigned long TWOTIME = TIME*2;
 
