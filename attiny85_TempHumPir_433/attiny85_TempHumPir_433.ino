@@ -30,37 +30,48 @@
 
 /************************************************************
 
-    emplacement des PIN de la puce ATtiny85
-                     +----+
-Ain0   (D  5)  PB5  1|*   |8   VCC
-Ain3   (D  3)  PB3  2|    |7   PB2 (D  2) Ain1
-Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
-               GND  4|    |5   PB0 (D  0) pwm0
-                     +----+ 
-             
-****************       Confuguration       *****************/
+    emplacement des PIN de la puce ATtiny8
+    
+                +-------+
+Ain0  D5  PB5  1|*      |8   VCC
+Ain3  D3  PB3  2|       |7   PB2  D2  Ain1
+Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
+          GND  4|       |5   PB0  D0  pwm0
+                +-------+ 
 
 
-#define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
-#define LOW_BATTERY_LEVEL 2600   // Voltage minumum (mV) avant d'indiquer batterie faible
-#define WDT_COUNT 5     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
+            cablage a realiser
+                
+                +-------+
+               1|*      |8   (+)
+  Data Sonde   2|       |7
+      TX 433   3|       |6
+         (-)   4|       |5   Switch
+                +-------+ 
+
+                             
+****************       Confuguration   niveau 1    *****************/
+
+#define NODE_ID 0xCC              // Identifiant unique de votre sonde (hexadecimal)
+#define LOW_BATTERY_LEVEL 2600    // Voltage minumum (mV) avant d'indiquer batterie faible
+#define WDT_COUNT 5              // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
 
 // commentez (ou supprimez) la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
-#define TEMP_ONLY   // sonde de température simple (ds18b20)
-
-#define DATA_PIN 3 // 3 // pin 2 // data de la sonde
-#define TX_PIN 4  // pin 3 // data transmetteur
+#define TEMP_ONLY                 // sonde de température simple (ds18b20)
 
 // commentez (ou supprimez) la ligne suivante si vous n'utilisez pas de capteur de mouvement
 //#define PIR
 
-#define PIR_PIN 0 // pin 5 // wake up PIR output
+#define PIR_HOUSE_CODE 'E'        // code maison du capteur de mouvement
+#define PIR_UNIT_CODE 6           // code unite du capteur de mouvement
 
-#define PIR_HOUSE_CODE 'E'  // code maison du capteur de mouvement
-#define PIR_UNIT_CODE 6   // code unite du capteur de mouvement
+/****************       Fin de configuration       *****************/
 
 
-/****************   Fin de configuration    *****************/
+
+#define DATA_PIN 3                // pin 2 // data de la sonde
+#define TX_PIN 4                  // pin 3 // data transmetteur
+#define PIR_PIN 0                 // pin 5 // wake up PIR output
 
 
 // Chargement des librairies
