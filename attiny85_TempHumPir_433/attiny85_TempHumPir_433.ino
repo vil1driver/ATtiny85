@@ -575,8 +575,8 @@ void loop()
         SEND_LOW();
         
         // Send vcc as meter reading. = ID = 12
-        delay(100);
-        myx10.RFXmeter(12,0,vcc);
+        //delay(100);
+        //myx10.RFXmeter(12,0,vcc);
       }
       else {
         
