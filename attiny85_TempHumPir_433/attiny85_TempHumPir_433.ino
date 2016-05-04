@@ -54,7 +54,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 
 #define NODE_ID 0xCC              // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2600    // Voltage minumum (mV) avant d'indiquer batterie faible
-#define WDT_COUNT 5              // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
+#define WDT_COUNT 5               // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
 
 // commentez (ou supprimez) la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
 #define TEMP_ONLY                 // sonde de température simple (ds18b20)
@@ -507,7 +507,6 @@ void setup_watchdog(int ii) {
 // Watchdog Interrupt Service / is executed when watchdog timed out 
 ISR(WDT_vect) {   
   //wake up
-  count--;
 } 
 
 #ifdef PIR
@@ -539,8 +538,19 @@ int readVCC() {
 
 void loop()
 {
-  
+  count--;
 
+  #ifdef PIR
+    // Get the update value
+    int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0); // closed = On
+     
+    if (value != oldValue) {
+       // Send in the new value
+       myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE,value);
+       oldValue = value;
+    }
+  #endif
+  
   if (count <= 0) { // on attend que le nombre de cycle soit atteint
       
       count=WDT_COUNT;  // reset counter
@@ -580,19 +590,11 @@ void loop()
         // Send a copie of the first message. The v2.1 protocol send the message two time 
         sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
         SEND_LOW();
+
       }
   }
 
-  #ifdef PIR
-    // Get the update value
-    int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0); // closed = On
-     
-    if (value != oldValue) {
-       // Send in the new value
-       myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE,value);
-       oldValue = value;
-    }
-  #endif
+  
     
   system_sleep();
 }
