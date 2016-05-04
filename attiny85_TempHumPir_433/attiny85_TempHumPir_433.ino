@@ -543,10 +543,6 @@ void loop()
     
         // Get the battery state
         int vcc = readVCC();
-        
-        // Send vcc as meter reading. = ID = 12
-        //myx10.RFXmeter(12,0,vcc);
-                
         lowBattery = vcc < LOW_BATTERY_LEVEL;
           
         setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
@@ -577,6 +573,10 @@ void loop()
         // Send a copie of the first message. The v2.1 protocol send the message two time 
         sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
         SEND_LOW();
+        
+        // Send vcc as meter reading. = ID = 12
+        delay(100);
+        myx10.RFXmeter(12,0,vcc);
       }
       else {
         
