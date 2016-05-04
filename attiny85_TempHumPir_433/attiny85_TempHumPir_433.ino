@@ -575,10 +575,6 @@ void loop()
         SEND_LOW();
         
       }
-      else {
-        
-      }
-        
     }
 
     #ifdef PIR
