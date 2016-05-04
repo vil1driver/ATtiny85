@@ -582,11 +582,11 @@ void loop()
     }
 
     // Get the update value
-    int value = digitalRead(PIR_PIN);
+    int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0); // closed = On
      
     if (value != oldValue) {
        // Send in the new value
-       myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE, (value==HIGH ? 1 : 0));
+       myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE,value);
        oldValue = value;
     }
     
