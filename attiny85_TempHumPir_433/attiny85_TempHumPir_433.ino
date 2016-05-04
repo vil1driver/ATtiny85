@@ -46,7 +46,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
                1|*      |8   (+)
   Data Sonde   2|       |7
       TX 433   3|       |6
-         (-)   4|       |5   Switch
+         (-)   4|       |5   Switch (optionel)
                 +-------+ 
 
                              
