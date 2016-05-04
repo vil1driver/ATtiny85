@@ -89,7 +89,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 
 #ifdef PIR
   volatile int oldValue = -1;
-  x10rf myx10 = x10rf(TX_PIN,0,2);
+  x10rf myx10 = x10rf(TX_PIN,0,2); // no blink led and send msg two times
 #endif
 
 
