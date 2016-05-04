@@ -543,7 +543,10 @@ void loop()
     
         // Get the battery state
         int vcc = readVCC();
-
+        
+        // Send vcc as meter reading. = ID = 12
+        //myx10.RFXmeter(12,0,vcc);
+                
         lowBattery = vcc < LOW_BATTERY_LEVEL;
           
         setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
@@ -582,10 +585,12 @@ void loop()
     }
 
     // Get the update value
+
     int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0); // closed = On
      
     if (value != oldValue) {
-       // Send in the new value
+
+      // Send in the new value
        myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE,value);
        oldValue = value;
     }
