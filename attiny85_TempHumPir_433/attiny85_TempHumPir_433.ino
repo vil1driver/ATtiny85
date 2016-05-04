@@ -41,9 +41,9 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 ****************       Confuguration       *****************/
 
 
-#define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
+#define NODE_ID 0xCE // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2600   // Voltage minumum (mV) avant d'indiquer batterie faible
-#define WDT_COUNT 5     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
+#define WDT_COUNT  5     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
 
 // commentez (ou supprimez) la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
 #define TEMP_ONLY   // sonde de température simple (ds18b20)
@@ -88,8 +88,8 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 #endif
 
 #ifdef PIR
+  volatile int oldValue = -1;
   x10rf myx10 = x10rf(TX_PIN,0,2);
-  volatile byte Motion = LOW;
 #endif
 
 
@@ -431,6 +431,7 @@ void setup()
  
  #ifdef PIR
    pinMode(PIR_PIN, INPUT); 
+   
    myx10.begin();
    
    PCMSK |= bit (PCINT0); 
@@ -502,7 +503,7 @@ ISR(WDT_vect) {
   // PIN Interrupt Service
   ISR(PCINT0_vect) 
   {
-    Motion = digitalRead(PIR_PIN);
+      //wake up
   }
 #endif
 
@@ -540,8 +541,8 @@ void loop()
       
       if (getTemperature(&temp)) {
     
-  // Get the battery state
-  int vcc = readVCC();
+        // Get the battery state
+        int vcc = readVCC();
 
         lowBattery = vcc < LOW_BATTERY_LEVEL;
           
@@ -579,13 +580,15 @@ void loop()
       }
         
     }
-  
-  #ifdef PIR
-    if (Motion) {
-     myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE, 1); // Switch On
-     delay(1000);
-    }
-  #endif
 
+    // Get the update value
+    int value = digitalRead(PIR_PIN);
+     
+    if (value != oldValue) {
+       // Send in the new value
+       myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE, (value==HIGH ? 1 : 0));
+       oldValue = value;
+    }
+    
   system_sleep();
 }
