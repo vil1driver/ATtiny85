@@ -574,9 +574,6 @@ void loop()
         sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
         SEND_LOW();
         
-        // Send vcc as meter reading. = ID = 12
-        //delay(100);
-        //myx10.RFXmeter(12,0,vcc);
       }
       else {
         
@@ -584,16 +581,19 @@ void loop()
         
     }
 
-    // Get the update value
-
-    int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0); // closed = On
-     
-    if (value != oldValue) {
-
-      // Send in the new value
-       myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE,value);
-       oldValue = value;
-    }
+    #ifdef PIR
+      // Get the update value
+  
+      int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0); // closed = On
+       
+      if (value != oldValue) {
+  
+        // Send in the new value
+         myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE,value);
+         oldValue = value;
+      }
+    #endif
+    
     
   system_sleep();
 }
