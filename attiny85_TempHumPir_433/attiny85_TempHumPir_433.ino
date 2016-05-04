@@ -41,9 +41,9 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 ****************       Confuguration       *****************/
 
 
-#define NODE_ID 0xCE // Identifiant unique de votre sonde (hexadecimal)
+#define NODE_ID 0xCC // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2600   // Voltage minumum (mV) avant d'indiquer batterie faible
-#define WDT_COUNT  5     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
+#define WDT_COUNT 5     // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
 
 // commentez (ou supprimez) la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
 #define TEMP_ONLY   // sonde de température simple (ds18b20)
