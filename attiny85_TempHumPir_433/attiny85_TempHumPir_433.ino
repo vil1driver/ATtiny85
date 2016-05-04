@@ -48,7 +48,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 // commentez (ou supprimez) la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
 #define TEMP_ONLY   // sonde de température simple (ds18b20)
 
-#define DATA_PIN 3 // pin 2 // data de la sonde
+#define DATA_PIN 3 // 3 // pin 2 // data de la sonde
 #define TX_PIN 4  // pin 3 // data transmetteur
 
 // commentez (ou supprimez) la ligne suivante si vous n'utilisez pas de capteur de mouvement
@@ -89,7 +89,7 @@ Ain2   (D  4)  PB4  3|    |6   PB1 (D  1) pwm1
 
 #ifdef PIR
   volatile int oldValue = -1;
-  x10rf myx10 = x10rf(TX_PIN,0,3); // no blink led and send msg 3 times
+  x10rf myx10 = x10rf(TX_PIN,0,3); // no blink led and send msg three times
 #endif
 
 
@@ -477,7 +477,6 @@ void system_sleep() {
 // 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
 // 6=1 sec,7=2 sec, 8=4 sec, 9= 8sec
 void setup_watchdog(int ii) {
-
   byte bb;
   int ww;
   if (ii > 9 ) ii=9;
@@ -496,6 +495,7 @@ void setup_watchdog(int ii) {
   
 // Watchdog Interrupt Service / is executed when watchdog timed out 
 ISR(WDT_vect) {   
+  //wake up
   count--;
 } 
 
@@ -532,11 +532,9 @@ void loop()
 
   if (count <= 0) { // on attend que le nombre de cycle soit atteint
       
-     count=WDT_COUNT;  // reset counter
-          
+      count=WDT_COUNT;  // reset counter
       
       // Get Temperature, humidity and battery level from sensors
-    
       float temp; 
       
       if (getTemperature(&temp)) {
@@ -552,12 +550,10 @@ void loop()
             // Set Humidity
             float humidity = dht.getHumidity();
             if (isnan(humidity)) {
-                
                 setHumidity(OregonMessageBuffer, 52); // Valeur par défaut en cas de lecture erronée
             }
             else
             {
-                
                 setHumidity(OregonMessageBuffer, humidity);
             }    
         #endif  
@@ -573,23 +569,19 @@ void loop()
         // Send a copie of the first message. The v2.1 protocol send the message two time 
         sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
         SEND_LOW();
-        
       }
-    }
+  }
 
-    #ifdef PIR
-      // Get the update value
-  
-      int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0); // closed = On
-       
-      if (value != oldValue) {
-  
-        // Send in the new value
-         myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE,value);
-         oldValue = value;
-      }
-    #endif
-    
+  #ifdef PIR
+    // Get the update value
+    int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0); // closed = On
+     
+    if (value != oldValue) {
+       // Send in the new value
+       myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE,value);
+       oldValue = value;
+    }
+  #endif
     
   system_sleep();
 }
