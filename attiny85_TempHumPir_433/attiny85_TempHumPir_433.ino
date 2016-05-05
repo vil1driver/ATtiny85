@@ -441,11 +441,8 @@ void setup()
  CLKPR = (1<<CLKPCE);  
  CLKPR = B00000000;  // set the fuses to 8mhz clock-speed.
  
- #ifdef PIR
+#ifdef PIR
    pinMode(PIR_PIN, INPUT); 
-   
-   myx10.begin();
-   
    PCMSK |= bit (PCINT0); 
    GIFR |= bit (PCIF); // clear any outstanding interrupts
    GIMSK |= bit (PCIE); // enable pin change interrupts 
