@@ -50,7 +50,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
                 +-------+ 
 
                              
-****************       Confuguration   niveau 1    *****************/
+****************       Confuguration    *****************/
 
 #define NODE_ID 0xCC              // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2600    // Voltage minumum (mV) avant d'indiquer batterie faible
@@ -65,7 +65,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 #define PIR_HOUSE_CODE 'E'        // code maison du capteur de mouvement
 #define PIR_UNIT_CODE 6           // code unite du capteur de mouvement
 
-/****************       Fin de configuration       *****************/
+/**************   Fin de configuration   *****************/
 
 
 
