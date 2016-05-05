@@ -417,6 +417,7 @@ boolean getTemperature(float *temp){
   // Pas d'erreur
   return true;
 #else
+  delay(dht.getMinimumSamplingPeriod());
   *temp = dht.getTemperature();
 
   if (isnan(*temp)) { // Failed reading temperature from DHT
