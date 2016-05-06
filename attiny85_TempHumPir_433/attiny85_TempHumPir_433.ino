@@ -467,6 +467,8 @@ void setup()
   setType(OregonMessageBuffer, ID);
   setChannel(OregonMessageBuffer, 0x20);
   setId(OregonMessageBuffer, NODE_ID);
+  
+  EEPROM.put(0, 0);
 
   delay(2000);
 
