@@ -78,7 +78,6 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 #include <avr/sleep.h>    // Sleep Modes
 #include <avr/wdt.h>      // Watchdog timer
 #include <avr/interrupt.h>
-#include <EEPROM.h> 
 #ifdef PIR
   #include  "x10rf.h"
 #endif
@@ -104,7 +103,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
   x10rf myx10 = x10rf(TX_PIN,0,3); // no blink led and send msg three times
 #endif
 
-
+volatile float lastTemp = 0;
 volatile int count = 0;
 boolean lowBattery = false;
 const unsigned long TIME = 512;
@@ -467,8 +466,6 @@ void setup()
   setType(OregonMessageBuffer, ID);
   setChannel(OregonMessageBuffer, 0x20);
   setId(OregonMessageBuffer, NODE_ID);
-  
-  EEPROM.put(0, 0);
 
   delay(2000);
 
@@ -564,15 +561,15 @@ void loop()
       
       if (getTemperature(&temp)) {
 
-        // get last temp
-        float lastTemp = 0.00f;
-        EEPROM.get(0, lastTemp);
+
+        // maybe we need round temp to one decimal...
+        
 
         // if temp has changed
         if (temp != lastTemp) {
         
             // save temp
-            EEPROM.put(0, temp);
+            lastTemp = temp;
         
             // Get the battery state
             int vcc = readVCC();
