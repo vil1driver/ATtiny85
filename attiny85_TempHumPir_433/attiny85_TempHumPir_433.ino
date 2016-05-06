@@ -562,8 +562,9 @@ void loop()
       if (getTemperature(&temp)) {
 
 
-        // maybe we need round temp to one decimal...
-        
+        // we need round temp to one decimal...
+        int a = round(temp * 10);
+        temp = a / 10.0;
 
         // if temp has changed
         if (temp != lastTemp) {
