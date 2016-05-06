@@ -103,7 +103,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
   x10rf myx10 = x10rf(TX_PIN,0,3); // no blink led and send msg three times
 #endif
 
-volatile float lastTemp = 0;
+volatile float lastTemp = 0.0;
 volatile int count = 0;
 boolean lowBattery = false;
 const unsigned long TIME = 512;
