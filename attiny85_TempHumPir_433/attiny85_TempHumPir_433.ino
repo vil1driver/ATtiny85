@@ -78,6 +78,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 #include <avr/sleep.h>    // Sleep Modes
 #include <avr/wdt.h>      // Watchdog timer
 #include <avr/interrupt.h>
+#include <EEPROM.h> 
 #ifdef PIR
   #include  "x10rf.h"
 #endif
@@ -468,6 +469,7 @@ void setup()
   setId(OregonMessageBuffer, NODE_ID);
 
   delay(2000);
+
 }
 
 
@@ -542,7 +544,7 @@ void loop()
 
   #ifdef PIR
     // Get the update value
-    int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0); // closed = On
+    int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0);
      
     if (value != oldValue) {
        // Send in the new value
@@ -559,37 +561,48 @@ void loop()
       float temp; 
       
       if (getTemperature(&temp)) {
-    
-        // Get the battery state
-        int vcc = readVCC();
-        lowBattery = vcc < LOW_BATTERY_LEVEL;
-          
-        setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
-        setTemperature(OregonMessageBuffer, temp);
-       
-        #ifndef TEMP_ONLY
-            // Set Humidity
-            float humidity = dht.getHumidity();
-            if (isnan(humidity)) {
-                setHumidity(OregonMessageBuffer, 52); // Valeur par défaut en cas de lecture erronée
-            }
-            else
-            {
-                setHumidity(OregonMessageBuffer, humidity);
-            }    
-        #endif  
-       
-        // Calculate the checksum
-        calculateAndSetChecksum(OregonMessageBuffer);
-             
-        // Send the Message over RF
-        sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-        // Send a "pause"
-        SEND_LOW();
-        delayMicroseconds(TWOTIME*8);
-        // Send a copie of the first message. The v2.1 protocol send the message two time 
-        sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-        SEND_LOW();
+
+        // get last temp
+        float lastTemp = 0.00f;
+        EEPROM.get(0, lastTemp);
+
+        // if temp has changed
+        if (temp != lastTemp) {
+        
+            // save temp
+            EEPROM.put(0, temp);
+        
+            // Get the battery state
+            int vcc = readVCC();
+            lowBattery = vcc < LOW_BATTERY_LEVEL;
+              
+            setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
+            setTemperature(OregonMessageBuffer, temp);
+           
+            #ifndef TEMP_ONLY
+                // Set Humidity
+                float humidity = dht.getHumidity();
+                if (isnan(humidity)) {
+                    setHumidity(OregonMessageBuffer, 52); // Valeur par défaut en cas de lecture erronée
+                }
+                else
+                {
+                    setHumidity(OregonMessageBuffer, humidity);
+                }    
+            #endif  
+           
+            // Calculate the checksum
+            calculateAndSetChecksum(OregonMessageBuffer);
+                 
+            // Send the Message over RF
+            sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
+            // Send a "pause"
+            SEND_LOW();
+            delayMicroseconds(TWOTIME*8);
+            // Send a copie of the first message. The v2.1 protocol send the message two time 
+            sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
+            SEND_LOW();
+        }   
 
       }
   }
