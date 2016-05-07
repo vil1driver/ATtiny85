@@ -68,8 +68,8 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 // decommenter la ligne suivante si vous utilisez un capteur supplementaire
 //#define PIR
 
-#define PIR_HOUSE_CODE 'E'        // code maison du capteur de mouvement
-#define PIR_UNIT_CODE 6           // code unite du capteur de mouvement
+#define PIR_HOUSE_CODE 'E'        // code maison du capteur
+#define PIR_UNIT_CODE 6           // code unite du capteur
 
 /***************  Fin de configuration   *****************/
 
