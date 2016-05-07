@@ -23,7 +23,7 @@
  * sketch unique pour sonde ds18b20 ou DHT11 ou DHT22/AM2302
  * choix de l'ID de la sonde
  * choix de la périodicité de transmission
- * la température n'est transmise que si elle à changée (sauvegarde batterie)
+ * la température n'est transmise que si elle à changé (sauvegarde batterie)
  * remontée niveau de batterie
  * 
  * ajout d'au capteur PIR ou reed ou tilt
