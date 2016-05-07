@@ -56,7 +56,9 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 
 #define NODE_ID 0xCC              // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2600    // Voltage minumum (mV) avant d'indiquer batterie faible
-#define WDT_COUNT 5              // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
+#define WDT_COUNT 5              // Nombre de cycles entre chaque mesure (1 cycle = 8 secondes, 5x8 = 40s)
+// si une mesure est identique a la precedente, elle ne sera pas transmise
+// une option est a venir pour choisir si oui ou non l'on transmet une mesure inchangee.
 
 // decommenter la ligne qui corresponds a votre sonde
 #define DS18B20
