@@ -56,10 +56,12 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 #define LOW_BATTERY_LEVEL 2600    // Voltage minumum (mV) avant d'indiquer batterie faible
 #define WDT_COUNT 5              // Nombre de cycles entre chaque transmission (1 cycles = 8 secondes, 5x8 = 40s)
 
-// commentez (ou supprimez) la ligne suivante si vous utilisez une sonde DHT11 ou DHT22
-#define TEMP_ONLY                 // sonde de température simple (ds18b20)
+// decommenter la ligne qui corresponds a votre sonde
+#define DS18B20
+//#define DHT11
+//#define DHT22
 
-// commentez (ou supprimez) la ligne suivante si vous n'utilisez pas de capteur de mouvement
+// decommenter la ligne suivante si utilisez un capteur supplementaire
 //#define PIR
 
 #define PIR_HOUSE_CODE 'E'        // code maison du capteur de mouvement
@@ -82,15 +84,21 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
   #include  "x10rf.h"
 #endif
   
-#ifdef TEMP_ONLY
+#ifdef DS18B20
   #include "OneWire.h"
   #define DS18B20 0x28     // Adresse 1-Wire du DS18B20
   OneWire ds(DATA_PIN); // Création de l'objet OneWire ds
 #else
-  #include "DHT.h"
-  DHT dht;
-#endif
-
+	#ifdef DHT11
+		#include "dht11.h"
+		dht11 DHT; //DHT11
+	#else
+		#ifdef DHT22
+			#include "dht.h"
+			dht DHT;  
+		#endif
+	#endif
+#endif	
 #ifndef cbi
   #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -113,7 +121,7 @@ const unsigned long TWOTIME = TIME*2;
 #define SEND_LOW() digitalWrite(TX_PIN, LOW)
  
 // Buffer for Oregon message
-#ifdef TEMP_ONLY
+#ifdef DS18B20
   byte OregonMessageBuffer[8];
 #else
   byte OregonMessageBuffer[9];
@@ -227,7 +235,7 @@ inline void sendPreamble(void)
  */
 inline void sendPostamble(void)
 {
-#ifdef TEMP_ONLY
+#ifdef DS18B20
   sendQuarterLSB(0x00);
 #else
   byte POSTAMBLE[]={0x00};
@@ -362,7 +370,7 @@ int Sum(byte count, const byte* data)
  */
 void calculateAndSetChecksum(byte* data)
 {
-#ifdef TEMP_ONLY
+#ifdef DS18B20
     int s = ((Sum(6, data) + (data[6]&0xF) - 0xa) & 0xff);
  
     data[6] |=  (s&0x0F) << 4;     data[7] =  (s&0xF0) >> 4;
@@ -379,7 +387,7 @@ void calculateAndSetChecksum(byte* data)
 // Retourne true si tout va bien, ou false en cas d'erreur
 boolean getTemperature(float *temp){
 
-#ifdef TEMP_ONLY  
+#ifdef DS18B20  
   byte present = 0;
   byte data[9];
   byte addr[8];
@@ -417,19 +425,36 @@ boolean getTemperature(float *temp){
   // Pas d'erreur
   return true;
 #else
-  delay(dht.getMinimumSamplingPeriod());
-  *temp = dht.getTemperature();
+	#ifdef DHT11
+		delay(2000);
+		int chk = DHT.read(DATA_PIN);
+		*temp = DHT.temperature;
 
-  if (isnan(*temp)) { // Failed reading temperature from DHT
-    return false;
-  }
-  else
-  {
-    // Pas d'erreur
-    return true;
-  }
-#endif
+		if (isnan(*temp)) { // Failed reading temperature from DHT
+		return false;
+		}
+		else
+		{
+		// Pas d'erreur
+		return true;
+		}
+	#else	
+		#ifdef DHT22
+			delay(2000);
+			int chk = DHT.read22(DATA_PIN);
+			*temp = DHT.temperature;
 
+			if (isnan(*temp)) { // Failed reading temperature from DHT
+			return false;
+			}
+			else
+			{
+			// Pas d'erreur
+			return true;
+			}  
+		#endif
+	#endif
+#endif	
 }
 
  
@@ -454,20 +479,19 @@ void setup()
 
   SEND_LOW();  
  
-#ifdef TEMP_ONLY  
+#ifdef DS18B20  
   // Create the Oregon message for a temperature only sensor (TNHN132N)
   byte ID[] = {0xEA,0x4C};
 #else
   // Create the Oregon message for a temperature/humidity sensor (THGR2228N)
   byte ID[] = {0x1A,0x2D};
-  dht.setup(DATA_PIN);
 #endif  
  
   setType(OregonMessageBuffer, ID);
   setChannel(OregonMessageBuffer, 0x20);
   setId(OregonMessageBuffer, NODE_ID);
 
-  delay(2000);
+  delay(1000);
 
 }
 
@@ -579,18 +603,30 @@ void loop()
             setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
             setTemperature(OregonMessageBuffer, temp);
            
-            #ifndef TEMP_ONLY
+            #ifdef DHT11
                 // Set Humidity
-                float humidity = dht.getHumidity();
+                float humidity = DHT.humidity;
                 if (isnan(humidity)) {
                     setHumidity(OregonMessageBuffer, 52); // Valeur par défaut en cas de lecture erronée
                 }
                 else
                 {
                     setHumidity(OregonMessageBuffer, humidity);
-                }    
-            #endif  
-           
+                }
+			#else
+				#ifdef DHT22
+					// Set Humidity
+					float humidity = DHT.humidity;
+					if (isnan(humidity)) {
+						setHumidity(OregonMessageBuffer, 52); // Valeur par défaut en cas de lecture erronée
+					}
+					else
+					{
+						setHumidity(OregonMessageBuffer, humidity);
+					}	
+				#endif  
+			#endif
+			
             // Calculate the checksum
             calculateAndSetChecksum(OregonMessageBuffer);
                  
