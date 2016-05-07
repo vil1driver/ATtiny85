@@ -63,7 +63,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 //#define DHT11
 //#define DHT22
 
-// decommenter la ligne suivante si utilisez un capteur supplementaire
+// decommenter la ligne suivante si vous utilisez un capteur supplementaire
 //#define PIR
 
 #define PIR_HOUSE_CODE 'E'        // code maison du capteur de mouvement
