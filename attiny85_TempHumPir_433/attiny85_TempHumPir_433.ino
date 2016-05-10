@@ -20,10 +20,8 @@
  *
  * V2 par vil1driver
  * 
- * sketch unique pour sonde ds18b20 ou DHT11 ou DHT22/AM2302
- * choix de l'ID de la sonde
+ * sketch unique pour sonde ds18b20 ou DHT11/22
  * choix de la périodicité de transmission
- * la température n'est transmise que si elle à changé (sauvegarde batterie)
  * remontée niveau de batterie
  * 
  * ajout d'au capteur PIR ou reed ou tilt
@@ -54,22 +52,24 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
                               
 ****************      Confuguration     *****************/
 
-#define NODE_ID 0xCC              // Identifiant unique de votre sonde (hexadecimal)
+#define NODE_ID 0xCE              // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2600    // Voltage minumum (mV) avant d'indiquer batterie faible
-#define WDT_COUNT 5              // Nombre de cycles entre chaque mesure (1 cycle = 8 secondes, 5x8 = 40s)
-// si une mesure est identique a la precedente, elle ne sera pas transmise
-// une option est a venir pour choisir si oui ou non l'on transmet une mesure inchangee.
+#define WDT_COUNT 30              // Nombre de cycles entre chaque mesure (1 cycles = 8 secondes, 5x8 = 40s)
 
 // decommenter la ligne qui corresponds a votre sonde
 #define DS18B20
 //#define DHT11
 //#define DHT22
 
-// decommenter la ligne suivante si vous utilisez un capteur supplementaire
+// si une mesure est identique a la precedente, elle ne sera pas transmise
+// decommentez la ligne suivante si vous souhaitez transmettre une mesure inchangee
+//#define ALWAYS_SEND
+
+// decommenter la ligne suivante si utilisez un capteur supplementaire
 //#define PIR
 
-#define PIR_HOUSE_CODE 'E'        // code maison du capteur
-#define PIR_UNIT_CODE 6           // code unite du capteur
+#define PIR_HOUSE_CODE 'E'        // code maison du capteur de mouvement
+#define PIR_UNIT_CODE 6           // code unite du capteur de mouvement
 
 /***************  Fin de configuration   *****************/
 
@@ -116,6 +116,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 #endif
 
 volatile float lastTemp = 0.0;
+volatile int lastHum = 0;
 volatile int count = 0;
 boolean lowBattery = false;
 const unsigned long TIME = 512;
@@ -590,61 +591,66 @@ void loop()
       if (getTemperature(&temp)) {
 
 
-        // we need round temp to one decimal...
-        int a = round(temp * 10);
-        temp = a / 10.0;
-
-        // if temp has changed
-        if (temp != lastTemp) {
-        
-            // save temp
-            lastTemp = temp;
-        
-            // Get the battery state
-            int vcc = readVCC();
-            lowBattery = vcc < LOW_BATTERY_LEVEL;
-              
-            setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
-            setTemperature(OregonMessageBuffer, temp);
-           
-            #ifdef DHT11
-                // Set Humidity
-                float humidity = DHT.humidity;
-                if (isnan(humidity)) {
-                    setHumidity(OregonMessageBuffer, 52); // Valeur par défaut en cas de lecture erronée
-                }
-                else
-                {
-                    setHumidity(OregonMessageBuffer, humidity);
-                }
+	        // we need round temp to one decimal...
+	        int a = round(temp * 10);
+	        temp = a / 10.0;
+	
+	        #ifdef ALWAYS_SEND
+	          lastTemp = 0;
+	        #endif  
+	
+	        // if temp has changed
+	        if (temp != lastTemp) {
+	        
+			// save temp
+			lastTemp = temp;
+			
+			// Get the battery state
+			int vcc = readVCC();
+			lowBattery = vcc < LOW_BATTERY_LEVEL;
+			
+			setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
+			setTemperature(OregonMessageBuffer, temp);
+			
+			#ifdef DHT11
+				// Set Humidity
+				float humidity = DHT.humidity;
+				if (isnan(humidity)) {
+				    	setHumidity(OregonMessageBuffer, lastHum); // envoi de l'ancienne mesure en cas de lecture erronée
+				}
+				else
+				{
+				    	setHumidity(OregonMessageBuffer, humidity);
+				    	lastHum = humidity;
+				}
 			#else
 				#ifdef DHT22
 					// Set Humidity
 					float humidity = DHT.humidity;
 					if (isnan(humidity)) {
-						setHumidity(OregonMessageBuffer, 52); // Valeur par défaut en cas de lecture erronée
+					      	setHumidity(OregonMessageBuffer, lastHum); // envoi de l'ancienne mesure en cas de lecture erronée
 					}
 					else
 					{
-						setHumidity(OregonMessageBuffer, humidity);
+					      	setHumidity(OregonMessageBuffer, humidity);
+						lastHum = humidity;
 					}	
 				#endif  
 			#endif
-			
-            // Calculate the checksum
-            calculateAndSetChecksum(OregonMessageBuffer);
-                 
-            // Send the Message over RF
-            sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-            // Send a "pause"
-            SEND_LOW();
-            delayMicroseconds(TWOTIME*8);
-            // Send a copie of the first message. The v2.1 protocol send the message two time 
-            sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-            SEND_LOW();
-        }   
-
-      }
+				
+			// Calculate the checksum
+			calculateAndSetChecksum(OregonMessageBuffer);
+			 
+			// Send the Message over RF
+			sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
+			// Send a "pause"
+			SEND_LOW();
+			delayMicroseconds(TWOTIME*8);
+			// Send a copie of the first message. The v2.1 protocol send the message two time 
+			sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
+			SEND_LOW();
+	        }   
+	}
   }
 
   
