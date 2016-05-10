@@ -596,15 +596,13 @@ void loop()
 	        int a = round(temp * 10);
 	        temp = a / 10.0;
 	
-	        #ifdef ALWAYS_SEND
-	          lastTemp = 0;
-	        #endif  
-	
 	        // if temp has changed
 	        if (temp != lastTemp) {
 	        
-			// save temp
-			lastTemp = temp;
+			#ifndef ALWAYS_SEND
+				// save temp
+				lastTemp = temp;
+			#endif	
 			
 			// Get the battery state
 			int vcc = readVCC();
