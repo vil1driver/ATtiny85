@@ -613,7 +613,7 @@ void loop()
 			
 			#ifdef DHT11
 				// Set Humidity
-				float humidity = DHT.humidity;
+				int humidity = DHT.humidity;
 				if (isnan(humidity)) {
 				    	setHumidity(OregonMessageBuffer, lastHum); // envoi de l'ancienne mesure en cas de lecture erronée
 				}
@@ -625,7 +625,7 @@ void loop()
 			#else
 				#ifdef DHT22
 					// Set Humidity
-					float humidity = DHT.humidity;
+					int humidity = DHT.humidity;
 					if (isnan(humidity)) {
 					      	setHumidity(OregonMessageBuffer, lastHum); // envoi de l'ancienne mesure en cas de lecture erronée
 					}
