@@ -87,6 +87,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 #include <avr/interrupt.h>
 #ifdef SWITCH
   #include  "x10rf.h"
+  x10rf myx10 = x10rf(TX_PIN,0,3); // no blink led and send msg three times
 #endif
   
 #ifdef DS18B20
@@ -104,11 +105,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
   #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-#ifdef SWITCH
-  volatile int oldValue = -1;
-  x10rf myx10 = x10rf(TX_PIN,0,3); // no blink led and send msg three times
-#endif
-
+volatile int oldValue = -1; // for x10 switch
 volatile float lastTemp = 0.0;
 volatile int count = 0;
 boolean lowBattery = false;
