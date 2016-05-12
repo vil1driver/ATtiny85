@@ -24,7 +24,7 @@
  * choix de la périodicité de transmission
  * remontée niveau de batterie
  * 
- * ajout d'au capteur PIR ou reed ou tilt
+ * ajout d'au capteur SWITCH ou reed ou tilt
  *
 */
 
@@ -67,10 +67,10 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 //#define ALWAYS_SEND
 
 // decommenter la ligne suivante si utilisez un capteur supplementaire
-//#define PIR
+//#define SWITCH
 
-#define PIR_HOUSE_CODE 'E'        // code maison du capteur de mouvement
-#define PIR_UNIT_CODE 6           // code unite du capteur de mouvement
+#define SWITCH_HOUSE_CODE 'E'        // code maison du capteur de mouvement
+#define SWITCH_UNIT_CODE 6           // code unite du capteur de mouvement
 
 /***************  Fin de configuration   *****************/
 
@@ -78,14 +78,14 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 
 #define DATA_PIN 3                // pin 2 // data de la sonde
 #define TX_PIN 4                  // pin 3 // data transmetteur
-#define PIR_PIN 0                 // pin 5 // wake up PIR output
+#define SWITCH_PIN 0                 // pin 5 // wake up SWITCH output
 
 
 // Chargement des librairies
 #include <avr/sleep.h>    // Sleep Modes
 #include <avr/wdt.h>      // Watchdog timer
 #include <avr/interrupt.h>
-#ifdef PIR
+#ifdef SWITCH
   #include  "x10rf.h"
 #endif
   
@@ -94,16 +94,16 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
   #define DS18B20 0x28     // Adresse 1-Wire du DS18B20
   OneWire ds(DATA_PIN); // Création de l'objet OneWire ds
 #else
-	#ifdef DHT11
-		#include "dht11.h"
-		dht11 DHT; //DHT11
-	#else
-		#ifdef DHT22
-			#include "dht.h"
-			dht DHT;  
-		#endif
-	#endif
-#endif	
+  #ifdef DHT11
+    #include "dht11.h"
+    dht11 DHT; //DHT11
+  #else
+    #ifdef DHT22
+      #include "dht.h"
+      dht DHT;  
+    #endif
+  #endif
+#endif  
 #ifndef cbi
   #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -111,13 +111,12 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
   #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-#ifdef PIR
+#ifdef SWITCH
   volatile int oldValue = -1;
   x10rf myx10 = x10rf(TX_PIN,0,3); // no blink led and send msg three times
 #endif
 
 volatile float lastTemp = 0.0;
-volatile int lastHum = 0;
 volatile int count = 0;
 boolean lowBattery = false;
 const unsigned long TIME = 512;
@@ -431,36 +430,39 @@ boolean getTemperature(float *temp){
   // Pas d'erreur
   return true;
 #else
-	#ifdef DHT11
-		delay(2000);
-		int chk = DHT.read(DATA_PIN);
-		*temp = DHT.temperature;
-
-		if (isnan(*temp)) { // Failed reading temperature from DHT
-		return false;
-		}
-		else
-		{
-		// Pas d'erreur
-		return true;
-		}
-	#else	
-		#ifdef DHT22
-			delay(2000);
-			int chk = DHT.read22(DATA_PIN);
-			*temp = DHT.temperature;
-
-			if (isnan(*temp)) { // Failed reading temperature from DHT
-			return false;
-			}
-			else
-			{
-			// Pas d'erreur
-			return true;
-			}  
-		#endif
-	#endif
-#endif	
+  #ifdef DHT11
+    delay(2000);
+    
+    int chk = DHT.read(DATA_PIN);
+    
+    if (chk == DHTLIB_OK) { // Ok
+      // Pas d'erreur
+      *temp = DHT.temperature;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  #else 
+    #ifdef DHT22
+      delay(2000);
+      
+      int chk = DHT.read22(DATA_PIN);
+      
+      if (chk == DHTLIB_OK) { // Ok
+        // Pas d'erreur
+        *temp = DHT.temperature;
+        return true;
+      
+      }
+      else
+      {
+        return false;
+      }  
+    #endif
+  #endif
+#endif  
 }
 
  
@@ -472,8 +474,8 @@ void setup()
  CLKPR = (1<<CLKPCE);  
  CLKPR = B00000000;  // set the fuses to 8mhz clock-speed.
  
-#ifdef PIR
-   pinMode(PIR_PIN, INPUT); 
+#ifdef SWITCH
+   pinMode(SWITCH_PIN, INPUT); 
    PCMSK |= bit (PCINT0); 
    GIFR |= bit (PCIF); // clear any outstanding interrupts
    GIMSK |= bit (PCIE); // enable pin change interrupts 
@@ -540,7 +542,7 @@ ISR(WDT_vect) {
   //wake up
 } 
 
-#ifdef PIR
+#ifdef SWITCH
   // PIN Interrupt Service
   ISR(PCINT0_vect) 
   {
@@ -571,13 +573,13 @@ void loop()
 {
   count--;
 
-  #ifdef PIR
+  #ifdef SWITCH
     // Get the update value
-    int value = (digitalRead(PIR_PIN)==HIGH ? 1 : 0);
+    int value = (digitalRead(SWITCH_PIN)==HIGH ? 1 : 0);
      
     if (value != oldValue) {
        // Send in the new value
-       myx10.x10Switch(PIR_HOUSE_CODE,PIR_UNIT_CODE,value);
+       myx10.x10Switch(SWITCH_HOUSE_CODE,SWITCH_UNIT_CODE,value);
        oldValue = value;
     }
   #endif
@@ -592,64 +594,46 @@ void loop()
       if (getTemperature(&temp)) {
 
 
-	        // we need round temp to one decimal...
-	        int a = round(temp * 10);
-	        temp = a / 10.0;
-	
-	        // if temp has changed
-	        if (temp != lastTemp) {
-	        
-			#ifndef ALWAYS_SEND
-				// save temp
-				lastTemp = temp;
-			#endif	
-			
-			// Get the battery state
-			int vcc = readVCC();
-			lowBattery = vcc < LOW_BATTERY_LEVEL;
-			
-			setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
-			setTemperature(OregonMessageBuffer, temp);
-			
-			#ifdef DHT11
-				// Set Humidity
-				int humidity = DHT.humidity;
-				if (isnan(humidity)) {
-				    	setHumidity(OregonMessageBuffer, lastHum); // envoi de l'ancienne mesure en cas de lecture erronée
-				}
-				else
-				{
-				    	setHumidity(OregonMessageBuffer, humidity);
-				    	lastHum = humidity;
-				}
-			#else
-				#ifdef DHT22
-					// Set Humidity
-					int humidity = DHT.humidity;
-					if (isnan(humidity)) {
-					      	setHumidity(OregonMessageBuffer, lastHum); // envoi de l'ancienne mesure en cas de lecture erronée
-					}
-					else
-					{
-					      	setHumidity(OregonMessageBuffer, humidity);
-						lastHum = humidity;
-					}	
-				#endif  
-			#endif
-				
-			// Calculate the checksum
-			calculateAndSetChecksum(OregonMessageBuffer);
-			 
-			// Send the Message over RF
-			sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-			// Send a "pause"
-			SEND_LOW();
-			delayMicroseconds(TWOTIME*8);
-			// Send a copie of the first message. The v2.1 protocol send the message two time 
-			sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-			SEND_LOW();
-	        }   
-	}
+          // we need round temp to one decimal...
+          int a = round(temp * 10);
+          temp = a / 10.0;
+  
+          // if temp has changed
+          if (temp != lastTemp) {
+          
+      #ifndef ALWAYS_SEND
+        // save temp
+        lastTemp = temp;
+      #endif  
+      
+      // Get the battery state
+      int vcc = readVCC();
+      lowBattery = vcc < LOW_BATTERY_LEVEL;
+      
+      // Set Battery Level
+      setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
+      
+      // Set Temperature
+      setTemperature(OregonMessageBuffer, temp);
+      
+      #ifndef DS18B20
+        // Set Humidity
+        setHumidity(OregonMessageBuffer, DHT.humidity);
+      #endif
+        
+      // Calculate the checksum
+      calculateAndSetChecksum(OregonMessageBuffer);
+       
+      // Send the Message over RF
+      sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
+      // Send a "pause"
+      SEND_LOW();
+      delayMicroseconds(TWOTIME*8);
+      // Send a copie of the first message. The v2.1 protocol send the message two time 
+      sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
+      SEND_LOW();
+          }   
+  }
   }
 
   
