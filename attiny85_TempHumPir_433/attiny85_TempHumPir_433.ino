@@ -594,39 +594,39 @@ void loop()
           // if temp has changed
           if (temp != lastTemp) {
           
-      #ifndef ALWAYS_SEND
-        // save temp
-        lastTemp = temp;
-      #endif  
-      
-      // Get the battery state
-      int vcc = readVCC();
-      lowBattery = vcc < LOW_BATTERY_LEVEL;
-      
-      // Set Battery Level
-      setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
-      
-      // Set Temperature
-      setTemperature(OregonMessageBuffer, temp);
-      
-      #ifndef DS18B20
-        // Set Humidity
-        setHumidity(OregonMessageBuffer, DHT.humidity);
-      #endif
-        
-      // Calculate the checksum
-      calculateAndSetChecksum(OregonMessageBuffer);
-       
-      // Send the Message over RF
-      sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-      // Send a "pause"
-      SEND_LOW();
-      delayMicroseconds(TWOTIME*8);
-      // Send a copie of the first message. The v2.1 protocol send the message two time 
-      sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-      SEND_LOW();
-          }   
-  }
+              #ifndef ALWAYS_SEND
+                // save temp
+                lastTemp = temp;
+              #endif  
+              
+              // Get the battery state
+              int vcc = readVCC();
+              lowBattery = vcc < LOW_BATTERY_LEVEL;
+              
+              // Set Battery Level
+              setBatteryLevel(OregonMessageBuffer, !lowBattery);  // 0=low, 1=high
+              
+              // Set Temperature
+              setTemperature(OregonMessageBuffer, temp);
+              
+              #ifndef DS18B20
+                // Set Humidity
+                setHumidity(OregonMessageBuffer, DHT.humidity);
+              #endif
+                
+              // Calculate the checksum
+              calculateAndSetChecksum(OregonMessageBuffer);
+               
+              // Send the Message over RF
+              sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
+              // Send a "pause"
+              SEND_LOW();
+              delayMicroseconds(TWOTIME*8);
+              // Send a copie of the first message. The v2.1 protocol send the message two time 
+              sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
+              SEND_LOW();
+                  }   
+          }
   }
 
   
