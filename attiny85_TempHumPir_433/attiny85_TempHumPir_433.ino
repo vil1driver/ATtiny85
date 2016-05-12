@@ -24,7 +24,7 @@
  * choix de la périodicité de transmission
  * remontée niveau de batterie
  * 
- * ajout d'au capteur SWITCH ou reed ou tilt
+ * ajout d'au capteur pir ou reed ou tilt
  *
 */
 
@@ -105,15 +105,15 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
   #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-volatile int oldValue = -1; // for x10 switch
+volatile uint8_t oldValue = -1; // for x10 switch
 volatile float lastTemp = 0.0;
 volatile int count = 0;
 boolean lowBattery = false;
 const unsigned long TIME = 512;
 const unsigned long TWOTIME = TIME*2;
 
-#define SEND_HIGH() digitalWrite(TX_PIN, HIGH)
-#define SEND_LOW() digitalWrite(TX_PIN, LOW)
+#define SENDHIGH() digitalWrite(TX_PIN, HIGH)
+#define SENDLOW() digitalWrite(TX_PIN, LOW)
  
 // Buffer for Oregon message
 #ifdef DS18B20
@@ -130,11 +130,11 @@ const unsigned long TWOTIME = TIME*2;
  */
 inline void sendZero(void) 
 {
-  SEND_HIGH();
+  SENDHIGH();
   delayMicroseconds(TIME);
-  SEND_LOW();
+  SENDLOW();
   delayMicroseconds(TWOTIME);
-  SEND_HIGH();
+  SENDHIGH();
   delayMicroseconds(TIME);
 }
  
@@ -146,11 +146,11 @@ inline void sendZero(void)
  */
 inline void sendOne(void) 
 {
-   SEND_LOW();
+   SENDLOW();
    delayMicroseconds(TIME);
-   SEND_HIGH();
+   SENDHIGH();
    delayMicroseconds(TWOTIME);
-   SEND_LOW();
+   SENDLOW();
    delayMicroseconds(TIME);
 }
  
@@ -475,7 +475,7 @@ void setup()
  setup_watchdog(9);
  pinMode(TX_PIN, OUTPUT); // sortie transmetteur
 
-  SEND_LOW();  
+  SENDLOW();  
  
 #ifdef DS18B20  
   // Create the Oregon message for a temperature only sensor (TNHN132N)
@@ -565,7 +565,7 @@ void loop()
 
   #ifdef SWITCH
     // Get the update value
-    int value = (digitalRead(SWITCH_PIN)==HIGH ? 1 : 0);
+    uint8_t value = (digitalRead(SWITCH_PIN)==HIGH ? OFF : ON);
      
     if (value != oldValue) {
        // Send in the new value
@@ -617,11 +617,11 @@ void loop()
               // Send the Message over RF
               sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
               // Send a "pause"
-              SEND_LOW();
+              SENDLOW();
               delayMicroseconds(TWOTIME*8);
               // Send a copie of the first message. The v2.1 protocol send the message two time 
               sendOregon(OregonMessageBuffer, sizeof(OregonMessageBuffer));
-              SEND_LOW();
+              SENDLOW();
                   }   
           }
   }
