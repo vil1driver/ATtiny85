@@ -85,10 +85,6 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 #include <avr/sleep.h>    // Sleep Modes
 #include <avr/wdt.h>      // Watchdog timer
 #include <avr/interrupt.h>
-#ifdef SWITCH
-  #include  "x10rf.h"
-  x10rf myx10 = x10rf(TX_PIN,0,3); // no blink led and send msg three times
-#endif
 #ifdef DS18B20
   #include "OneWire.h"
   #define DS18B20 0x28     // Adresse 1-Wire du DS18B20
@@ -96,6 +92,10 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 #else
   #include "dht.h"
   dht DHT;
+#endif
+#ifdef SWITCH
+  #include  "x10rf.h"
+  x10rf myx10 = x10rf(TX_PIN,0,3); // no blink led and send msg three times
 #endif
 
 #ifndef cbi
