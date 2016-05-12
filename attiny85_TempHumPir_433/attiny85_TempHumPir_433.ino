@@ -94,15 +94,8 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
   #define DS18B20 0x28     // Adresse 1-Wire du DS18B20
   OneWire ds(DATA_PIN); // Création de l'objet OneWire ds
 #else
-  #ifdef DHT11
-    #include "dht11.h"
-    dht11 DHT; //DHT11
-  #else
-    #ifdef DHT22
-      #include "dht.h"
-      dht DHT;  
-    #endif
-  #endif
+  #include "dht.h"
+  dht DHT;
 #endif  
 #ifndef cbi
   #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -433,7 +426,7 @@ boolean getTemperature(float *temp){
   #ifdef DHT11
     delay(2000);
     
-    int chk = DHT.read(DATA_PIN);
+    int chk = DHT.read11(DATA_PIN);
     
     if (chk == DHTLIB_OK) { // Ok
       // Pas d'erreur
