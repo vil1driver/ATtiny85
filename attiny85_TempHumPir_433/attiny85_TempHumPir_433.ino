@@ -66,7 +66,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 // decommentez la ligne suivante si vous souhaitez transmettre une mesure inchangee
 //#define ALWAYS_SEND
 
-// decommenter la ligne suivante si utilisez un capteur supplementaire
+// decommenter la ligne suivante si vous utilisez un capteur supplementaire
 //#define SWITCH
 
 #define SWITCH_HOUSE_CODE 'E'        // code maison du capteur de mouvement
