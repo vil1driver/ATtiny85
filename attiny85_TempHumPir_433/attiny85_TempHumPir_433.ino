@@ -530,6 +530,7 @@ void setup_watchdog(int ii) {
 // Watchdog Interrupt Service / is executed when watchdog timed out 
 ISR(WDT_vect) {   
   //wake up
+  count--;
 } 
 
 #ifdef SWITCH
@@ -561,8 +562,7 @@ int readVCC() {
 
 void loop()
 {
-  count--;
-
+  
   if (count <= 0) { // on attend que le nombre de cycle soit atteint
       
       count=WDT_COUNT;  // reset counter
