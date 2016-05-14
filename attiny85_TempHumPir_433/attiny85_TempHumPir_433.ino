@@ -63,7 +63,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 
 // si une mesure est identique a la precedente, elle ne sera pas transmise
 // on economise ainsi la batterie
-// decommentez la ligne suivante si vous souhaitez transmettre une mesure inchangee
+// decommentez la ligne suivante si vous souhaitez transmettre chaque mesure
 //#define ALWAYS_SEND
 
 // decommenter la ligne suivante si vous utilisez un capteur supplementaire
