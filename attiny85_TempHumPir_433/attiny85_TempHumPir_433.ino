@@ -421,7 +421,7 @@ boolean getTemperature(float *temp){
   return true;
 #else
   #ifdef DHT11
-    delay(2000);
+    //delay(2000);
     
     int chk = DHT.read11(DATA_PIN);
     
@@ -436,7 +436,7 @@ boolean getTemperature(float *temp){
     }
   #else 
     #ifdef DHT22
-      delay(2000);
+      //delay(2000);
       
       int chk = DHT.read22(DATA_PIN);
       
@@ -489,7 +489,7 @@ void setup()
   setChannel(OregonMessageBuffer, 0x20);
   setId(OregonMessageBuffer, NODE_ID);
 
-  delay(1000);
+  delay(2000);
 
 }
 
