@@ -563,18 +563,6 @@ void loop()
 {
   count--;
 
-  #ifdef SWITCH
-    // Get the update value
-    delay(150); // debounce
-    uint8_t value = (digitalRead(SWITCH_PIN)==HIGH ? OFF : ON);
-     
-    if (value != oldValue) {
-       // Send in the new value
-       myx10.x10Switch(SWITCH_HOUSE_CODE,SWITCH_UNIT_CODE,value);
-       oldValue = value;
-    }
-  #endif
-  
   if (count <= 0) { // on attend que le nombre de cycle soit atteint
       
       count=WDT_COUNT;  // reset counter
@@ -627,7 +615,17 @@ void loop()
           }
   }
 
-  
+  #ifdef SWITCH
+    // Get the update value
+    delay(150); // debounce
+    uint8_t value = (digitalRead(SWITCH_PIN)==HIGH ? OFF : ON);
+     
+    if (value != oldValue) {
+       // Send in the new value
+       myx10.x10Switch(SWITCH_HOUSE_CODE,SWITCH_UNIT_CODE,value);
+       oldValue = value;
+    }
+  #endif
     
   system_sleep();
 }
