@@ -617,7 +617,7 @@ void loop()
 
   #ifdef SWITCH
     // Get the update value
-    delay(150); // debounce
+    delay(50); // debounce
     uint8_t value = (digitalRead(SWITCH_PIN)==HIGH ? OFF : ON);
      
     if (value != oldValue) {
