@@ -472,7 +472,11 @@ void setup()
    sei();
 #endif
  
- setup_watchdog(9);
+ #if defined(DS18B20) || defined(DHT11) || defined(DHT22)
+    // initialisation des cycles de reveil
+    setup_watchdog(9);
+ #endif
+ 
  pinMode(TX_PIN, OUTPUT); // sortie transmetteur
 
   SENDLOW();  
