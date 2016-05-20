@@ -560,7 +560,7 @@ ISR(WDT_vect) {
   ISR(PCINT0_vect) 
   {
       //wake up
-      delay(50); // debounce
+      delay(10); // debounce
   }
 #endif
 
