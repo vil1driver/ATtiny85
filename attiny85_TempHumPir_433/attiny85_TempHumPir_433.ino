@@ -45,12 +45,13 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
                 +-------+
                1|*      |8   (+)
   Data Sonde   2|       |7
-      TX 433   3|       |6
-         (-)   4|       |5   Switch (optionel)
+      TX 433   3|       |6   Switch B (optionel)
+         (-)   4|       |5   Switch A (optionel)
                 +-------+ 
 
                               
-****************      Confuguration     *****************/
+****************      Confuguration     *******************/
+
 
 #define NODE_ID 0xCC              // Identifiant unique de votre sonde (hexadecimal)
 #define LOW_BATTERY_LEVEL 2600    // Voltage minumum (mV) avant d'indiquer batterie faible
@@ -66,19 +67,30 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 // decommentez la ligne suivante si vous souhaitez transmettre chaque mesure
 //#define ALWAYS_SEND
 
-// decommenter la ligne suivante si vous utilisez un capteur supplementaire
-//#define SWITCH
 
-#define SWITCH_HOUSE_CODE 'E'        // code maison du capteur de mouvement
-#define SWITCH_UNIT_CODE 6           // code unite du capteur de mouvement
+/**********************************************************/
 
-/***************  Fin de configuration   *****************/
 
+// decommenter la(les) ligne(s) suivante(s) si vous utilisez un(des) capteur(s) supplementaire(s)
+//#define SWITCH_A
+//#define SWITCH_B
+
+#define SWITCH_A_HOUSE_CODE 'E'        // code maison du capteur A
+#define SWITCH_A_UNIT_CODE 6           // code unite du capteur A
+#define SWITCH_B_HOUSE_CODE 'E'        // code maison du capteur B
+#define SWITCH_B_UNIT_CODE 7           // code unite du capteur B
+
+
+/**********************************************************/
 
 
 #define DATA_PIN 3                // pin 2 // data de la sonde
 #define TX_PIN 4                  // pin 3 // data transmetteur
-#define SWITCH_PIN 0                 // pin 5 // wake up SWITCH output
+#define SWITCH_A_PIN 0            // pin 5 // wake up SWITCH A output
+#define SWITCH_B_PIN 1            // pin 6 // wake up SWITCH B output
+
+
+/***************  Fin de configuration   *****************/
 
 
 // Chargement des librairies
@@ -93,7 +105,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
   #include "dht.h"
   dht DHT;
 #endif
-#ifdef SWITCH
+#if defined(SWITCH_A) || defined(SWITCH_B)
   #include  "x10rf.h"
   x10rf myx10 = x10rf(TX_PIN,0,3); // no blink led and send msg three times
 #endif
@@ -105,7 +117,12 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
   #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-volatile uint8_t oldValue = -1; // for x10 switch
+#ifdef SWITCH_A
+  volatile uint8_t oldValueA = -1; // for x10 switch A
+#endif
+#ifdef SWITCH_B
+  volatile uint8_t oldValueB = -1; // for x10 switch B
+#endif  
 volatile float lastTemp = 0.0;
 volatile int count = 0;
 boolean lowBattery = false;
@@ -464,12 +481,18 @@ void setup()
  CLKPR = (1<<CLKPCE);  
  CLKPR = B00000000;  // set the fuses to 8mhz clock-speed.
  
-#ifdef SWITCH
-   pinMode(SWITCH_PIN, INPUT); 
-   PCMSK |= bit (PCINT0); 
-   GIFR |= bit (PCIF); // clear any outstanding interrupts
+#ifdef SWITCH_A
+   pinMode(SWITCH_A_PIN, INPUT);
+   PCMSK |= bit (PCINT0);
+#endif   
+#ifdef SWITCH_B
+   pinMode(SWITCH_B_PIN, INPUT);
+   PCMSK |= bit (PCINT1);
+#endif 
+#if defined(SWITCH_A) || defined(SWITCH_B)   
+   GIFR |= bit (PCIF);  // clear any outstanding interrupts
    GIMSK |= bit (PCIE); // enable pin change interrupts 
-   sei();
+   sei();               // enable interrupts   
 #endif
  
  #if defined(DS18B20) || defined(DHT11) || defined(DHT22)
@@ -537,11 +560,12 @@ ISR(WDT_vect) {
   count--;
 } 
 
-#ifdef SWITCH
+#if defined(SWITCH_A) || defined(SWITCH_B)
   // PIN Interrupt Service
   ISR(PCINT0_vect) 
   {
       //wake up
+      delay(50); // debounce
   }
 #endif
 
@@ -619,15 +643,25 @@ void loop()
           }
   }
 
-  #ifdef SWITCH
+
+  #ifdef SWITCH_A
     // Get the update value
-    delay(50); // debounce
-    uint8_t value = (digitalRead(SWITCH_PIN)==HIGH ? OFF : ON);
+    uint8_t valueA = (digitalRead(SWITCH_A_PIN)==HIGH ? OFF : ON);
      
-    if (value != oldValue) {
+    if (valueA != oldValueA) {
        // Send in the new value
-       myx10.x10Switch(SWITCH_HOUSE_CODE,SWITCH_UNIT_CODE,value);
-       oldValue = value;
+       myx10.x10Switch(SWITCH_A_HOUSE_CODE,SWITCH_A_UNIT_CODE,valueA);
+       oldValueA = valueA;
+    }
+  #endif
+  #ifdef SWITCH_B
+    // Get the update value
+    uint8_t valueB = (digitalRead(SWITCH_B_PIN)==HIGH ? OFF : ON);
+     
+    if (valueB != oldValueB) {
+       // Send in the new value
+       myx10.x10Switch(SWITCH_B_HOUSE_CODE,SWITCH_B_UNIT_CODE,valueB);
+       oldValueB = valueB;
     }
   #endif
     
