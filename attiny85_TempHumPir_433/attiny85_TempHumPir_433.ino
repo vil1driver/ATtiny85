@@ -585,7 +585,7 @@ int readVCC() {
 
 void loop()
 {
-  
+#if defined(DS18B20) || defined(DHT11) || defined(DHT22)
   if (count <= 0) { // on attend que le nombre de cycle soit atteint
       
       count=WDT_COUNT;  // reset counter
@@ -637,7 +637,7 @@ void loop()
                   }   
           }
   }
-
+#endif
 
   #ifdef SWITCH_A
     // Get the update value
