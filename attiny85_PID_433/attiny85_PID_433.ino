@@ -54,15 +54,15 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 // parents : 87 26 95
 // thomas : 76 12 116
 // salon : 95 16 143
-const int Kp = 76;  // coefficient proportionnelle
-const int Ki = 12;  // coefficient integrale
-const int Kd = 116; // coefficient dérivée
+const int Kp = 95;  // coefficient proportionnelle
+const int Ki = 16;  // coefficient integrale
+const int Kd = 143; // coefficient dérivée
 
 // consignes températures
 // parents 19.0
 // thomas 19.5
 // salon 20.0
-const float consigne = 19.5;
+const float consigne = 20.0;
 
 #define CYCLE 75 // cycle de 10 minute ( 75 * 8s)
 volatile int cycleCount = 0;
@@ -71,7 +71,7 @@ volatile int cycleCount = 0;
 // parents 2345678
 // thomas 1234567
 // salon 3456789
-const unsigned long remoteID = 1234567;
+const unsigned long remoteID = 3456789;
 const byte unitID = 1;
 
 /***************  Fin de configuration   *****************/
@@ -145,31 +145,15 @@ void setup()
  delay(1000);
 }
 
-// see http://arduino.cc/forum/index.php?topic=83826.0
-#define BODS 7                   //BOD Sleep bit in MCUCR
-#define BODSE 2                  //BOD Sleep enable bit in MCUCR
-
 // set system into the sleep state 
 // system wakes up when wtchdog is timed out
 void sleep() {
   cbi(ADCSRA, ADEN); // disable adc
   cbi(ADCSRA, ADSC); // stop conversion
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-  sleep_enable();
-  // turn off the brown-out detector.
-  // must have an ATtiny45 or ATtiny85 rev C or later for software to be able to disable the BOD.
-  // current while sleeping will be <0.5uA if BOD is disabled, <25uA if not.
-  uint8_t mcucr1 = MCUCR | _BV(BODS) | _BV(BODSE);  //turn off the brown-out detector
-  uint8_t mcucr2 = mcucr1 & ~_BV(BODSE);
-  MCUCR = mcucr1;
-  MCUCR = mcucr2;
-  pinMode(TX_PIN,INPUT); // set used port to intput to save power
-  sleep_cpu();                   // go to sleep
-  // wake up here
-  sleep_disable();
+  sleep_mode();                        // Go to sleep
   sbi( ADCSRA, ADEN );  // enable adc
   sbi( ADCSRA, ADSC );  // restart conversion
-  pinMode(TX_PIN,OUTPUT); // set port into state before sleep
 }
 
 // 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
