@@ -54,15 +54,15 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 // parents : 87 26 95
 // thomas : 76 12 116
 // salon : 95 16 143
-const int Kp = 95;  // coefficient proportionnelle
-const int Ki = 16;  // coefficient integrale
-const int Kd = 143; // coefficient dérivée
+const int Kp = 76;  // coefficient proportionnelle
+const int Ki = 12;  // coefficient integrale
+const int Kd = 116; // coefficient dérivée
 
 // consignes températures
 // parents 19.0
 // thomas 19.5
 // salon 20.0
-const float consigne = 20.0;
+const float consigne = 19.5;
 
 #define CYCLE 75 // cycle de 10 minute ( 75 * 8s)
 volatile int cycleCount = 0;
@@ -71,7 +71,7 @@ volatile int cycleCount = 0;
 // parents 2345678
 // thomas 1234567
 // salon 3456789
-const unsigned long remoteID = 3456789;
+const unsigned long remoteID = 1234567;
 const byte unitID = 1;
 
 /***************  Fin de configuration   *****************/
@@ -89,20 +89,17 @@ boolean heat;
 #include "NewRemoteTransmitter.h" // https://github.com/mattwire/arduino-dev/tree/master/libraries/NewRemoteSwitch
 NewRemoteTransmitter transmitter(remoteID, TX_PIN, 249, 3);
 
-
-
 #include "OneWire.h"
 #define DS18B20 0x28     // Adresse 1-Wire du DS18B20
 OneWire ds(DATA_PIN); // Création de l'objet OneWire ds
 
-
+// Routines to set and claer bits (used in the sleep code)
 #ifndef cbi
   #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
 #ifndef sbi
   #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
-
 
 // Fonction récupérant la température
 // Retourne true si tout va bien, ou false en cas d'erreur
@@ -136,9 +133,6 @@ boolean getTemperature(float *temp){
   return true;
 }
 
- 
-/******************************************************************/
- 
 void setup()
 {
  CLKPR = (1<<CLKPCE);  
@@ -158,7 +152,8 @@ void setup()
 // set system into the sleep state 
 // system wakes up when wtchdog is timed out
 void sleep() {
-  cbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter OFF
+  cbi(ADCSRA, ADEN); // disable adc
+  cbi(ADCSRA, ADSC); // stop conversion
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_enable();
   // turn off the brown-out detector.
@@ -168,9 +163,13 @@ void sleep() {
   uint8_t mcucr2 = mcucr1 & ~_BV(BODSE);
   MCUCR = mcucr1;
   MCUCR = mcucr2;
+  pinMode(TX_PIN,INPUT); // set used port to intput to save power
   sleep_cpu();                   // go to sleep
+  // wake up here
   sleep_disable();
-  sbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter ON               
+  sbi( ADCSRA, ADEN );  // enable adc
+  sbi( ADCSRA, ADSC );  // restart conversion
+  pinMode(TX_PIN,OUTPUT); // set port into state before sleep
 }
 
 // 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
@@ -214,13 +213,11 @@ int readVCC() {
   return ((uint32_t)1024 * (uint32_t)1100) / analogReadInternal();
 }
 
-
 void loop()
 {
   // Get the battery state
   // int vcc = readVCC();
   compute();
-  //system_sleep();
   sleep();
 }
 
