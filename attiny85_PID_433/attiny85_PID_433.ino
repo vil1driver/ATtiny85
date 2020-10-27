@@ -76,6 +76,7 @@ const byte unitID = 1;
 
 /***************  Fin de configuration   *****************/
 
+float temp;
 float tmp[4] = {0.0, 0.0, 0.0, 0.0};
 float somErrI = 1.0;
 int heatTime;
@@ -143,6 +144,8 @@ void setup()
  delay(1000);
  transmitter.sendUnit(unitID, true);  // appairage avec la prise DI.O
  delay(1000);
+ getTemperature(&temp);
+ tmp[0], tmp[1], tmp[2], tmp[3] = temp;
 }
 
 // set system into the sleep state 
@@ -180,27 +183,8 @@ ISR(WDT_vect) {
   cycleCount--;
 } 
 
-//reads internal 1V1 reference against VCC
-//return number 0 .. 1023 
-int analogReadInternal() {
-  ADMUX = _BV(MUX3) | _BV(MUX2); // For ATtiny85
-  delay(5); // Wait for Vref to settle
-  ADCSRA |= _BV(ADSC); // Convert
-  while (bit_is_set(ADCSRA,ADSC));
-  uint8_t low = ADCL;
-  return (ADCH << 8) | low; 
-}
-
-//calculate VCC based on internal referrence
-//return voltage in mV
-int readVCC() {
-  return ((uint32_t)1024 * (uint32_t)1100) / analogReadInternal();
-}
-
 void loop()
 {
-  // Get the battery state
-  // int vcc = readVCC();
   compute();
   sleep();
 }
@@ -213,13 +197,9 @@ void compute()
     cycleCount = CYCLE;  // reset counter
       
     // récupération température (lecture sonde)
-    float temp;
     if (getTemperature(&temp))
     {
-      // init table des températures
-      for (int i = 0; i < 4; i++) {
-        if (tmp[i] == 0) { tmp[i] = temp; }
-      }
+
       // décallage dans table temps (suppression de la plus ancienne mesure et ajout de la nouvelle)
       //memmove(tmp, tmp+1 , 3*sizeof *tmp);
       tmp[0] = tmp[1];
@@ -231,7 +211,7 @@ void compute()
       // calcule somme erreurs
       float somErr = 4 * consigne - tmp[0] - tmp[1] - tmp[2] - tmp[3];
       
-      if (somErr < 2) {
+      if (abs(somErr) < 2) {
         somErr = somErrI;
         if (abs(err) > 0.1) {
           somErr, somErrI = constrain(somErr + err / 2, 0, 5);
