@@ -71,7 +71,7 @@ volatile int cycleCount = 0;
 // parents 2345678
 // thomas 1234567
 // salon 3456789
-const long remoteID = 3456789;
+const unsigned long remoteID = 3456789;
 const byte unitID = 1;
 
 /***************  Fin de configuration   *****************/
