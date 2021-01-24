@@ -244,7 +244,7 @@ void compute()
       // mise en route du chauffage (mini pour 30s)
       if (heatTime > 0) {
         heat = true;
-        transmitter.sendUnit(unitID, true);;
+        transmitter.sendUnit(unitID, true);
       }
       else {
         transmitter.sendUnit(unitID, false);
