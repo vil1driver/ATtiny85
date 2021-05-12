@@ -138,6 +138,8 @@ void setup()
 {
  CLKPR = (1<<CLKPCE);  
  CLKPR = B00000000;  // set the fuses to 8mhz clock-speed.
+ cbi(ADCSRA, ADEN); // disable adc
+ cbi(ADCSRA, ADSC); // stop conversion
  setup_watchdog(9);
  pinMode(TX_PIN, OUTPUT); // sortie transmetteur
  digitalWrite(TX_PIN, LOW); // sendLow
@@ -151,12 +153,8 @@ void setup()
 // set system into the sleep state 
 // system wakes up when wtchdog is timed out
 void sleep() {
-  cbi(ADCSRA, ADEN); // disable adc
-  cbi(ADCSRA, ADSC); // stop conversion
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_mode();                        // Go to sleep
-  sbi( ADCSRA, ADEN );  // enable adc
-  sbi( ADCSRA, ADSC );  // restart conversion
 }
 
 // 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
