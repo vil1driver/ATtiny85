@@ -85,7 +85,6 @@ boolean heat;
 // Chargement des librairies
 #include <avr/sleep.h>    // Sleep Modes
 #include <avr/wdt.h>      // Watchdog timer
-#include <avr/interrupt.h>
 
 #include "NewRemoteTransmitter.h" // https://github.com/mattwire/arduino-dev/tree/master/libraries/NewRemoteSwitch
 NewRemoteTransmitter transmitter(remoteID, TX_PIN, 249, 3);
@@ -140,21 +139,18 @@ void setup()
  CLKPR = B00000000;  // set the fuses to 8mhz clock-speed.
  cbi(ADCSRA, ADEN); // disable adc
  cbi(ADCSRA, ADSC); // stop conversion
- setup_watchdog(9);
+ setup_watchdog(9); // approximately 8 seconds sleep
+ set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
  pinMode(TX_PIN, OUTPUT); // sortie transmetteur
  digitalWrite(TX_PIN, LOW); // sendLow
+ pinMode(0, INPUT);  // try power saving
+ pinMode(1, INPUT);  // try power saving
+ pinMode(2, INPUT);  // try power saving
  delay(1000);
  transmitter.sendUnit(unitID, true);  // appairage avec la prise DI.O
  delay(1000);
  getTemperature(&temp);
  tmp[0], tmp[1], tmp[2], tmp[3] = temp;
-}
-
-// set system into the sleep state 
-// system wakes up when wtchdog is timed out
-void sleep() {
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-  sleep_mode();                        // Go to sleep
 }
 
 // 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
@@ -184,7 +180,12 @@ ISR(WDT_vect) {
 void loop()
 {
   compute();
-  sleep();
+  // set system into the sleep state 
+  // system wakes up when wtchdog is timed out  
+  pinMode(TX_PIN, INPUT);  // try power saving
+  sleep_mode();                        // Go to sleep
+  pinMode(TX_PIN, OUTPUT);
+  digitalWrite(TX_PIN, LOW); // sendLow
 }
 
 void compute()
