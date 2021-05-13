@@ -40,7 +40,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
                1|°      |8   (+)
   Data Sonde   2|       |7
       TX 433   3|       |6
-         (-)   4|       |5
+         (-)   4|       |5    +VCC output 
                 +-------+ 
 
                               
@@ -49,20 +49,21 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 
 #define DATA_PIN 3                // pin 2 // data de la sonde
 #define TX_PIN 4                  // pin 3 // data transmetteur
+#define VCC_OUT 0                 // pin 5 // alimentation sonde et transmetteur
 
 // coeffs pid
 // parents : 87 26 95
 // thomas : 76 12 116
 // salon : 95 16 143
-const int Kp = 95;  // coefficient proportionnelle
-const int Ki = 16;  // coefficient integrale
-const int Kd = 143; // coefficient dérivée
+const int Kp = 87;  // coefficient proportionnelle
+const int Ki = 26;  // coefficient integrale
+const int Kd = 95; // coefficient dérivée
 
 // consignes températures
-// parents 19.0
+// parents 17.5
 // thomas 19.5
 // salon 20.0
-const float consigne = 20.0;
+const float consigne = 17.5;
 
 #define CYCLE 75 // cycle de 10 minute ( 75 * 8s)
 volatile int cycleCount = 0;
@@ -71,7 +72,7 @@ volatile int cycleCount = 0;
 // parents 2345678
 // thomas 1234567
 // salon 3456789
-const unsigned long remoteID = 3456789;
+const unsigned long remoteID = 2345678;
 const byte unitID = 1;
 
 /***************  Fin de configuration   *****************/
@@ -82,6 +83,7 @@ float somErrI = 1.0;
 int heatTime;
 boolean heat;
 
+#define F_CPU 8000000UL
 // Chargement des librairies
 #include <avr/sleep.h>    // Sleep Modes
 #include <avr/wdt.h>      // Watchdog timer
@@ -121,8 +123,8 @@ boolean getTemperature(float *temp){
   ds.reset();             // On reset le bus 1-Wire
   ds.select(addr);        // On sélectionne le DS18B20
   ds.write(0x44, 1);      // On lance une prise de mesure de température
-  delay(1000);             // Et on attend la fin de la mesure
-  present = ds.reset();             // On reset le bus 1-Wire
+  delay(1000);            // Et on attend la fin de la mesure
+  present = ds.reset();   // On reset le bus 1-Wire
   ds.select(addr);        // On sélectionne le DS18B20
   ds.write(0xBE);         // On envoie une demande de lecture du scratchpad
   for (byte i = 0; i < 9; i++) // On lit le scratchpad
@@ -143,9 +145,10 @@ void setup()
  set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
  pinMode(TX_PIN, OUTPUT); // sortie transmetteur
  digitalWrite(TX_PIN, LOW); // sendLow
- pinMode(0, INPUT_PULLUP);  // try power saving
- pinMode(1, INPUT_PULLUP);  // try power saving
- pinMode(2, INPUT_PULLUP);  // try power saving
+ pinMode(VCC_OUT, OUTPUT);  
+ digitalWrite(VCC_OUT, HIGH); // power up ds18b20 and RF
+ pinMode(1, INPUT_PULLUP);  // unused pin not floating
+ pinMode(2, INPUT_PULLUP);  // unused pin not floating
  delay(1000);
  transmitter.sendUnit(unitID, true);  // appairage avec la prise DI.O
  delay(1000);
@@ -181,8 +184,10 @@ void loop()
 {
   compute();
   // set system into the sleep state 
-  // system wakes up when wtchdog is timed out  
-  sleep_mode();                        // Go to sleep
+  // system wakes up when watchdog is timed out  
+  digitalWrite(VCC_OUT, LOW); // power down ds18b20 and RF
+  sleep_mode(); // Go to sleep
+  digitalWrite(VCC_OUT, HIGH); // power up ds18b20 and RF
 }
 
 void compute()
