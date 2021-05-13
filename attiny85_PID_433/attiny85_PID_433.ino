@@ -27,7 +27,7 @@
     emplacement des PIN de la puce ATtiny8
     
                 +-------+
-Ain0  D5  PB5  1|*      |8   VCC
+Ain0  D5  PB5  1|°      |8   VCC
 Ain3  D3  PB3  2|       |7   PB2  D2  Ain1
 Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
           GND  4|       |5   PB0  D0  pwm0
@@ -37,7 +37,7 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
             cablage a realiser
                 
                 +-------+
-               1|*      |8   (+)
+               1|°      |8   (+)
   Data Sonde   2|       |7
       TX 433   3|       |6
          (-)   4|       |5
@@ -143,9 +143,9 @@ void setup()
  set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
  pinMode(TX_PIN, OUTPUT); // sortie transmetteur
  digitalWrite(TX_PIN, LOW); // sendLow
- pinMode(0, INPUT);  // try power saving
- pinMode(1, INPUT);  // try power saving
- pinMode(2, INPUT);  // try power saving
+ pinMode(0, INPUT_PULLUP);  // try power saving
+ pinMode(1, INPUT_PULLUP);  // try power saving
+ pinMode(2, INPUT_PULLUP);  // try power saving
  delay(1000);
  transmitter.sendUnit(unitID, true);  // appairage avec la prise DI.O
  delay(1000);
@@ -182,10 +182,7 @@ void loop()
   compute();
   // set system into the sleep state 
   // system wakes up when wtchdog is timed out  
-  pinMode(TX_PIN, INPUT);  // try power saving
   sleep_mode();                        // Go to sleep
-  pinMode(TX_PIN, OUTPUT);
-  digitalWrite(TX_PIN, LOW); // sendLow
 }
 
 void compute()
