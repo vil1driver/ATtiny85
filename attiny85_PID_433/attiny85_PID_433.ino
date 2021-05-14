@@ -147,7 +147,6 @@ void setup()
  pinMode(1, INPUT_PULLUP);  // unused pin not floating
  pinMode(2, INPUT_PULLUP);  // unused pin not floating
  transmitter.sendUnit(unitID, true);  // appairage avec la prise DI.O
- ds.reset_search();    // Réinitialise la recherche de module
  delay(50);
  getTemperature(&temp);
  tmp[0], tmp[1], tmp[2], tmp[3] = temp;
