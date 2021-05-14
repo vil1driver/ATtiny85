@@ -63,7 +63,7 @@ const int Kd = 95; // coefficient dérivée
 // parents 17.5
 // thomas 19.5
 // salon 20.0
-const float consigne = 17.5;
+const float consigne = 20.0;
 
 #define CYCLE 75 // cycle de 10 minute ( 75 * 8s)
 volatile int cycleCount = 0;
@@ -82,6 +82,7 @@ float tmp[4] = {0.0, 0.0, 0.0, 0.0};
 float somErrI = 1.0;
 int heatTime;
 boolean heat;
+boolean coldStart = true;
 
 #define F_CPU 8000000UL
 // Chargement des librairies
@@ -92,7 +93,6 @@ boolean heat;
 NewRemoteTransmitter transmitter(remoteID, TX_PIN, 249, 3);
 
 #include "OneWire.h"
-#define DS18B20 0x28     // Adresse 1-Wire du DS18B20
 OneWire ds(DATA_PIN); // Création de l'objet OneWire ds
 
 // Routines to set and claer bits (used in the sleep code)
@@ -107,50 +107,35 @@ OneWire ds(DATA_PIN); // Création de l'objet OneWire ds
 // Retourne true si tout va bien, ou false en cas d'erreur
 boolean getTemperature(float *temp){
   byte present = 0;
-  byte data[9]; // data : Données lues depuis le scratchpad
-  byte addr[8]; // addr : adresse du module 1-Wire détecté
-  if (!ds.search(addr)) { // Recherche un module 1-Wire
-    ds.reset_search();    // Réinitialise la recherche de module
-    delay(250);
-  }
-  if (OneWire::crc8(addr, 7) != addr[7]) // Vérifie que l'adresse a été correctement reçue
-    return false;                        // Si le message est corrompu on retourne une erreur
-  if (addr[0] != DS18B20) // Vérifie qu'il s'agit bien d'un DS18B20
-    return false;         // Si ce n'est pas le cas on retourne une erreur
-  ds.reset();             // On reset le bus 1-Wire
-  ds.select(addr);        // On sélectionne le DS18B20
-  ds.write(0x44, 1);      // On lance une prise de mesure de température
-  delay(1000);            // Et on attend la fin de la mesure
-  present = ds.reset();   // On reset le bus 1-Wire
-  ds.select(addr);        // On sélectionne le DS18B20
-  ds.write(0xBE);         // On envoie une demande de lecture du scratchpad
-  for (byte i = 0; i < 9; i++) // On lit le scratchpad
-    data[i] = ds.read();       // Et on stock les octets reçus
+  byte data[9];                 // data : Données lues depuis le scratchpad
+  ds.reset();                   // On reset le bus 1-Wire
+  ds.skip();                    // On sélectionne l'unique DS18B20
+  ds.write(0x44, 1);            // On lance une prise de mesure de température
+  delay(850);                   // Et on attend la fin de la mesure
+  present = ds.reset();         // On reset le bus 1-Wire
+  ds.skip();                    // On sélectionne l'unique DS18B20
+  ds.write(0xBE);               // On envoie une demande de lecture du scratchpad
+  for (byte i = 0; i < 9; i++)  // On lit le scratchpad
+    data[i] = ds.read();        // Et on stock les octets reçus
   // Calcul de la température en degré Celsius
   *temp = ((data[1] << 8) | data[0]) * 0.0625; 
-  // Pas d'erreur
-  return true;
 }
 
-void setup()
-{
- CLKPR = (1<<CLKPCE);  
- CLKPR = B00000000;  // set the fuses to 8mhz clock-speed.
- cbi(ADCSRA, ADEN); // disable adc
- cbi(ADCSRA, ADSC); // stop conversion
- setup_watchdog(9); // approximately 8 seconds sleep
- set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
- pinMode(TX_PIN, OUTPUT); // sortie transmetteur
- digitalWrite(TX_PIN, LOW); // sendLow
- pinMode(VCC_OUT, OUTPUT);  
- digitalWrite(VCC_OUT, HIGH); // power up ds18b20 and RF
- pinMode(1, INPUT_PULLUP);  // unused pin not floating
- pinMode(2, INPUT_PULLUP);  // unused pin not floating
- transmitter.sendUnit(unitID, true);  // appairage avec la prise DI.O
- delay(50);
- getTemperature(&temp);
- tmp[0], tmp[1], tmp[2], tmp[3] = temp;
- delay(1000);
+void setup() {
+  CLKPR = (1<<CLKPCE);  
+  CLKPR = B00000000;  // set the fuses to 8mhz clock-speed.
+  cbi(ADCSRA, ADEN); // disable adc
+  cbi(ADCSRA, ADSC); // stop conversion
+  setup_watchdog(9); // approximately 8 seconds sleep
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
+  pinMode(TX_PIN, OUTPUT); // sortie transmetteur
+  digitalWrite(TX_PIN, LOW); // sendLow
+  pinMode(VCC_OUT, OUTPUT);  
+  digitalWrite(VCC_OUT, HIGH); // power up ds18b20 and RF
+  pinMode(1, INPUT_PULLUP);  // unused pin not floating
+  pinMode(2, INPUT_PULLUP);  // unused pin not floating
+  transmitter.sendUnit(unitID, true);  // appairage avec la prise DI.O
+  delay(1000);
 }
 
 // 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
@@ -177,14 +162,15 @@ ISR(WDT_vect) {
   cycleCount--;
 } 
 
-void loop()
-{
+void loop() {
   compute();
   // set system into the sleep state 
   // system wakes up when watchdog is timed out  
-  digitalWrite(VCC_OUT, LOW); // power down ds18b20 and RF
+  // power down ds18b20 and RF (fastest way)
+  PORTB &= ~_BV (VCC_OUT); // digitalWrite (VCC_OUT, LOW);
   sleep_mode(); // Go to sleep
-  digitalWrite(VCC_OUT, HIGH); // power up ds18b20 and RF
+  // power up ds18b20 and RF (fastest way)
+  PORTB |= _BV (VCC_OUT); // digitalWrite (VCC_OUT, HIGH);
 }
 
 void compute()
@@ -195,58 +181,63 @@ void compute()
     cycleCount = CYCLE;  // reset counter
     delay(50);
     // récupération température (lecture sonde)
-    if (getTemperature(&temp))
+    getTemperature(&temp);
+    if (coldStart)
     {
-
+       // initialisation de la table des températures
+       tmp[0], tmp[1], tmp[2], tmp[3] = temp;
+       coldStart = false;
+    }
+    else {
       // décallage dans table temps (suppression de la plus ancienne mesure et ajout de la nouvelle)
-      //memmove(tmp, tmp+1 , 3*sizeof *tmp);
       tmp[0] = tmp[1];
       tmp[1] = tmp[2];
       tmp[2] = tmp[3];
       tmp[3] = temp;
-      // calcule erreur
-      float err = consigne - temp;
-      // calcule somme erreurs
-      float somErr = 4 * consigne - tmp[0] - tmp[1] - tmp[2] - tmp[3];
-      
-      if (abs(somErr) < 2) {
-        somErr = somErrI;
-        if (abs(err) > 0.1) {
-          somErr, somErrI = constrain(somErr + err / 2, 0, 5);
-        }
+    }
+  
+    // calcule erreur
+    float err = consigne - temp;
+    // calcule somme erreurs
+    float somErr = 4 * consigne - tmp[0] - tmp[1] - tmp[2] - tmp[3];
+    
+    if (abs(somErr) < 2) {
+      somErr = somErrI;
+      if (abs(err) > 0.1) {
+        somErr, somErrI = constrain(somErr + err / 2, 0, 5);
       }
-      // calcule moyenne erreur glissante
-      float moyErr = ((consigne - tmp[0]) + (consigne - tmp[1]) * 8 + (consigne - tmp[2]) * 27 + (consigne - tmp[3]) * 64) / 100;
-      // clacule dérivée
-      float deriv = (4 * (4 * tmp[0] + 3 * tmp[1] + 2 * tmp[2] + tmp[3]) - 10 * (tmp[0] + tmp[1] + tmp[2] + tmp[3])) / 20;
-      // calcule temp de mise en route en secondes (pour un cycle de 10min)
-      heatTime = round(constrain(Kp * moyErr + Ki * somErr + Kd * deriv, 0, 100) * 0.1 * 60);
-      
-      // définition des bords max 30s entre 2 ordres opposés
-      if (heatTime >= 585) {
-        heatTime = 600;
-      }
-      else if (heatTime >= 570) {
-        heatTime = 570;
-      }
-      else if (heatTime >= 30) {
-        heatTime = heatTime;
-      }
-      else if (heatTime >= 15) {
-        heatTime = 30;
-      }
-      else {
-        heatTime = 0;
-      }
-      
-      // mise en route du chauffage (mini pour 30s)
-      if (heatTime > 0) {
-        heat = true;
-        transmitter.sendUnit(unitID, true);
-      }
-      else {
-        transmitter.sendUnit(unitID, false);
-      }
+    }
+    // calcule moyenne erreur glissante
+    float moyErr = ((consigne - tmp[0]) + (consigne - tmp[1]) * 8 + (consigne - tmp[2]) * 27 + (consigne - tmp[3]) * 64) / 100;
+    // clacule dérivée
+    float deriv = (4 * (4 * tmp[0] + 3 * tmp[1] + 2 * tmp[2] + tmp[3]) - 10 * (tmp[0] + tmp[1] + tmp[2] + tmp[3])) / 20;
+    // calcule temp de mise en route en secondes (pour un cycle de 10min)
+    heatTime = round(constrain(Kp * moyErr + Ki * somErr + Kd * deriv, 0, 100) * 0.1 * 60);
+    
+    // définition des bords max 30s entre 2 ordres opposés
+    if (heatTime >= 585) {
+      heatTime = 600;
+    }
+    else if (heatTime >= 570) {
+      heatTime = 570;
+    }
+    else if (heatTime >= 30) {
+      heatTime = heatTime;
+    }
+    else if (heatTime >= 15) {
+      heatTime = 30;
+    }
+    else {
+      heatTime = 0;
+    }
+    
+    // mise en route du chauffage (mini pour 30s)
+    if (heatTime > 0) {
+      heat = true;
+      transmitter.sendUnit(unitID, true);
+    }
+    else {
+      transmitter.sendUnit(unitID, false);
     }
   }
   // arrêt chauffage
