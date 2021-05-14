@@ -207,7 +207,7 @@ void compute()
     
     if (abs(somErr) < 2) {
       if (abs(err) > 0.1) {
-        somErrI = constrain(somErr + err / 2, 0, 5);
+        somErrI = constrain(somErrI + err / 2, 0, 5);
       }
       somErr = somErrI;
     }
