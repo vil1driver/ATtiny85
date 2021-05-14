@@ -14,11 +14,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * V1 par vil1driver
+ * V1.1 par vil1driver
+ * Power down sensor and RF at sleep
  * 
- * PID heating control
+ * V1 par vil1driver
+ * PID heating control running on bat
  * get temp from ds18b20
- * heater control by rf transmission to DI.O wallplug
+ * heater control by RF transmission 433mhz to DI.O wallplug
  *
 */
 
@@ -55,15 +57,15 @@ Ain2  D4  PB4  3|       |6   PB1  D1  pwm1
 // parents : 87 26 95
 // thomas : 76 12 116
 // salon : 95 16 143
-const int Kp = 87;  // coefficient proportionnelle
-const int Ki = 26;  // coefficient integrale
-const int Kd = 95; // coefficient dérivée
+const int Kp = 87;      // coefficient proportionnelle
+const int Ki = 26;      // coefficient integrale
+const int Kd = 95;      // coefficient dérivée
 
 // consignes températures
 // parents 17.5
 // thomas 19.5
 // salon 20.0
-const float consigne = 20.0;
+const float consigne = 17.5;
 
 #define CYCLE 75 // cycle de 10 minute ( 75 * 8s)
 volatile int cycleCount = 0;
@@ -84,7 +86,7 @@ int heatTime;
 boolean heat;
 boolean coldStart = true;
 
-#define F_CPU 8000000UL
+#define F_CPU 8000000UL   // proc 8MHz
 // Chargement des librairies
 #include <avr/sleep.h>    // Sleep Modes
 #include <avr/wdt.h>      // Watchdog timer
@@ -104,7 +106,6 @@ OneWire ds(DATA_PIN); // Création de l'objet OneWire ds
 #endif
 
 // Fonction récupérant la température
-// Retourne true si tout va bien, ou false en cas d'erreur
 boolean getTemperature(float *temp){
   byte present = 0;
   byte data[9];                 // data : Données lues depuis le scratchpad
@@ -123,18 +124,18 @@ boolean getTemperature(float *temp){
 
 void setup() {
   CLKPR = (1<<CLKPCE);  
-  CLKPR = B00000000;  // set the fuses to 8mhz clock-speed.
-  cbi(ADCSRA, ADEN); // disable adc
-  cbi(ADCSRA, ADSC); // stop conversion
-  setup_watchdog(9); // approximately 8 seconds sleep
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
-  pinMode(TX_PIN, OUTPUT); // sortie transmetteur
-  digitalWrite(TX_PIN, LOW); // sendLow
+  CLKPR = B00000000;                    // set the fuses to 8mhz clock-speed.
+  cbi(ADCSRA, ADEN);                    // disable adc
+  cbi(ADCSRA, ADSC);                    // stop conversion
+  setup_watchdog(9);                    // approximately 8 seconds sleep
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);  // sleep mode is set here
+  pinMode(TX_PIN, OUTPUT);              // sortie transmetteur
+  digitalWrite(TX_PIN, LOW);            // sendLow
   pinMode(VCC_OUT, OUTPUT);  
-  digitalWrite(VCC_OUT, HIGH); // power up ds18b20 and RF
-  pinMode(1, INPUT_PULLUP);  // unused pin not floating
-  pinMode(2, INPUT_PULLUP);  // unused pin not floating
-  transmitter.sendUnit(unitID, true);  // appairage avec la prise DI.O
+  digitalWrite(VCC_OUT, HIGH);          // power up ds18b20 and RF
+  pinMode(1, INPUT_PULLUP);             // unused pin not floating
+  pinMode(2, INPUT_PULLUP);             // unused pin not floating
+  transmitter.sendUnit(unitID, true);   // appairage avec la prise DI.O
   delay(1000);
 }
 
@@ -166,11 +167,9 @@ void loop() {
   compute();
   // set system into the sleep state 
   // system wakes up when watchdog is timed out  
-  // power down ds18b20 and RF (fastest way)
-  PORTB &= ~_BV (VCC_OUT); // digitalWrite (VCC_OUT, LOW);
+  // power down ds18b20 and RF
+  digitalWrite (VCC_OUT, LOW);
   sleep_mode(); // Go to sleep
-  // power up ds18b20 and RF (fastest way)
-  PORTB |= _BV (VCC_OUT); // digitalWrite (VCC_OUT, HIGH);
 }
 
 void compute()
@@ -179,14 +178,16 @@ void compute()
   if (cycleCount <= 0)
   {
     cycleCount = CYCLE;  // reset counter
+    // power up ds18b20 and RF
+    digitalWrite (VCC_OUT, HIGH);
     delay(50);
     // récupération température (lecture sonde)
     getTemperature(&temp);
     if (coldStart)
     {
-       // initialisation de la table des températures
-       tmp[0], tmp[1], tmp[2], tmp[3] = temp;
-       coldStart = false;
+      // initialisation de la table des températures
+      tmp[0], tmp[1], tmp[2], tmp[3] = temp;
+      coldStart = false;
     }
     else {
       // décallage dans table temps (suppression de la plus ancienne mesure et ajout de la nouvelle)
@@ -237,12 +238,15 @@ void compute()
       transmitter.sendUnit(unitID, true);
     }
     else {
+      heat = false;
       transmitter.sendUnit(unitID, false);
     }
   }
   // arrêt chauffage
   else if (CYCLE - cycleCount >= round(heatTime / 8) and heat) {
     heat = false;
+    // power up ds18b20 and RF
+    digitalWrite (VCC_OUT, HIGH);
     transmitter.sendUnit(unitID, false);
   }
 }
