@@ -186,7 +186,10 @@ void compute()
     if (coldStart)
     {
       // initialisation de la table des températures
-      tmp[0], tmp[1], tmp[2], tmp[3] = temp;
+      tmp[0] = temp;
+      tmp[1] = temp;
+      tmp[2] = temp;
+      tmp[3] = temp;
       coldStart = false;
     }
     else {
@@ -203,10 +206,10 @@ void compute()
     float somErr = 4 * consigne - tmp[0] - tmp[1] - tmp[2] - tmp[3];
     
     if (abs(somErr) < 2) {
-      somErr = somErrI;
       if (abs(err) > 0.1) {
-        somErr, somErrI = constrain(somErr + err / 2, 0, 5);
+        somErrI = constrain(somErr + err / 2, 0, 5);
       }
+      somErr = somErrI;
     }
     // calcule moyenne erreur glissante
     float moyErr = ((consigne - tmp[0]) + (consigne - tmp[1]) * 8 + (consigne - tmp[2]) * 27 + (consigne - tmp[3]) * 64) / 100;
