@@ -107,14 +107,11 @@ OneWire ds(DATA_PIN); // Création de l'objet OneWire ds
 // Retourne true si tout va bien, ou false en cas d'erreur
 boolean getTemperature(float *temp){
   byte present = 0;
-  byte data[9];
-  byte addr[8];
-  // data : Données lues depuis le scratchpad
-  // addr : adresse du module 1-Wire détecté
+  byte data[9]; // data : Données lues depuis le scratchpad
+  byte addr[8]; // addr : adresse du module 1-Wire détecté
   if (!ds.search(addr)) { // Recherche un module 1-Wire
     ds.reset_search();    // Réinitialise la recherche de module
     delay(250);
-  //return false;         // Retourne une erreur
   }
   if (OneWire::crc8(addr, 7) != addr[7]) // Vérifie que l'adresse a été correctement reçue
     return false;                        // Si le message est corrompu on retourne une erreur
@@ -149,11 +146,12 @@ void setup()
  digitalWrite(VCC_OUT, HIGH); // power up ds18b20 and RF
  pinMode(1, INPUT_PULLUP);  // unused pin not floating
  pinMode(2, INPUT_PULLUP);  // unused pin not floating
- delay(1000);
  transmitter.sendUnit(unitID, true);  // appairage avec la prise DI.O
- delay(1000);
+ ds.reset_search();    // Réinitialise la recherche de module
+ delay(50);
  getTemperature(&temp);
  tmp[0], tmp[1], tmp[2], tmp[3] = temp;
+ delay(1000);
 }
 
 // 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
@@ -196,7 +194,7 @@ void compute()
   if (cycleCount <= 0)
   {
     cycleCount = CYCLE;  // reset counter
-      
+    delay(50);
     // récupération température (lecture sonde)
     if (getTemperature(&temp))
     {
@@ -250,7 +248,7 @@ void compute()
       else {
         transmitter.sendUnit(unitID, false);
       }
-    }  
+    }
   }
   // arrêt chauffage
   else if (CYCLE - cycleCount >= round(heatTime / 8) and heat) {
